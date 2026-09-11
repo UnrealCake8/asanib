@@ -43,6 +43,8 @@ export interface Quote {
   requestId: string
   providerId: string
   providerName: string
+  providerPhone?: string
+  providerWhatsapp?: string
   amount: number
   etaMinutes?: number
   message?: string
@@ -56,6 +58,8 @@ export interface Booking {
   customerId: string
   providerId: string
   providerName: string
+  providerPhone?: string
+  providerWhatsapp?: string
   quoteId: string
   amount: number
   status: BookingStatus
