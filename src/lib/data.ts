@@ -168,10 +168,11 @@ export async function setProviderAvailability(uid: string, availableNow: boolean
   await updateDoc(doc(db, 'providers', uid), { availableNow, updatedAt: serverTimestamp() })
 }
 
-export function watchOpenRequests(callback: (items: ServiceRequest[]) => void): Unsubscribe {
+export function watchOpenRequests(callback: (items: ServiceRequest[]) => void): () => undefined {
   const { db } = requireFirebase()
   const q = query(collection(db, 'requests'), where('status', '==', 'open'), orderBy('createdAt', 'desc'))
-  return onSnapshot(q, (snapshot) => callback(snapshot.docs.map(requestFromDoc)))
+  const stop = onSnapshot(q, (snapshot) => callback(snapshot.docs.map(requestFromDoc)))
+  return () => { stop(); return undefined }
 }
 
 export function matchingRequests(profile: ProviderProfile, requests: ServiceRequest[]) {
