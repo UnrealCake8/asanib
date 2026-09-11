@@ -65,3 +65,16 @@ export interface Booking {
   status: BookingStatus
   createdAt?: unknown
 }
+
+export interface Review {
+  id: string
+  bookingId: string
+  requestId: string
+  customerId: string
+  providerId: string
+  providerName: string
+  rating: number
+  comment?: string
+  createdAt?: unknown
+  updatedAt?: unknown
+}
