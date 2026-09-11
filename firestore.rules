@@ -2,10 +2,117 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // V1 starts locked. Open only the exact collections as each authenticated
-    // customer/provider flow is implemented and tested.
-    match /{document=**} {
-      allow read, write: if false;
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isApprovedProvider() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/providers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/providers/$(request.auth.uid)).data.approved == true;
+    }
+
+    function ownsRequest(requestId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/requests/$(requestId))
+        && get(/databases/$(database)/documents/requests/$(requestId)).data.customerId == request.auth.uid;
+    }
+
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['customer', 'provider'];
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    match /providers/{providerId} {
+      allow create: if signedIn()
+        && request.auth.uid == providerId
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.approved == false;
+      allow read: if signedIn() && (request.auth.uid == providerId || isAdmin());
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.auth.uid == providerId
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.approved == resource.data.approved);
+      allow delete: if isAdmin();
+    }
+
+    match /requests/{requestId} {
+      allow create: if signedIn()
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow read: if signedIn()
+        && (resource.data.customerId == request.auth.uid || isApprovedProvider() || isAdmin());
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.customerId == request.auth.uid
+          && request.resource.data.customerId == resource.data.customerId
+          && request.resource.data.status in ['open', 'booked', 'cancelled', 'completed']);
+      allow delete: if false;
+    }
+
+    match /quotes/{quoteId} {
+      allow create: if isApprovedProvider()
+        && request.resource.data.providerId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId))
+        && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.status == 'open';
+      allow read: if signedIn()
+        && (resource.data.providerId == request.auth.uid || ownsRequest(resource.data.requestId) || isAdmin());
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.providerId == request.auth.uid
+          && request.resource.data.providerId == resource.data.providerId
+          && request.resource.data.requestId == resource.data.requestId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status == 'withdrawn')
+        || (ownsRequest(resource.data.requestId)
+          && request.resource.data.providerId == resource.data.providerId
+          && request.resource.data.requestId == resource.data.requestId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status == 'accepted');
+      allow delete: if false;
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if signedIn()
+        && request.resource.data.customerId == request.auth.uid
+        && ownsRequest(request.resource.data.requestId)
+        && exists(/databases/$(database)/documents/quotes/$(request.resource.data.quoteId))
+        && get(/databases/$(database)/documents/quotes/$(request.resource.data.quoteId)).data.requestId == request.resource.data.requestId
+        && get(/databases/$(database)/documents/quotes/$(request.resource.data.quoteId)).data.providerId == request.resource.data.providerId
+        && get(/databases/$(database)/documents/quotes/$(request.resource.data.quoteId)).data.amount == request.resource.data.amount
+        && getAfter(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.status == 'booked'
+        && getAfter(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.acceptedQuoteId == request.resource.data.quoteId;
+      allow read: if signedIn()
+        && (resource.data.customerId == request.auth.uid || resource.data.providerId == request.auth.uid || isAdmin());
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.providerId == request.auth.uid
+          && request.resource.data.providerId == resource.data.providerId
+          && request.resource.data.customerId == resource.data.customerId
+          && request.resource.data.requestId == resource.data.requestId
+          && request.resource.data.quoteId == resource.data.quoteId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+          && request.resource.data.status in ['booked', 'in_progress', 'completed', 'cancelled']);
+      allow delete: if false;
     }
   }
 }
