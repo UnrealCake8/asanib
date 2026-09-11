@@ -1,5 +1,7 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  linkWithCredential,
   onAuthStateChanged,
   signInAnonymously,
   signInWithEmailAndPassword,
@@ -27,6 +29,7 @@ import type {
   ParsedRequest,
   ProviderProfile,
   Quote,
+  Review,
   ServiceRequest,
 } from '../types'
 
@@ -49,6 +52,27 @@ export async function ensureCustomerUser(): Promise<User> {
   const { auth } = requireFirebase()
   if (auth.currentUser) return auth.currentUser
   const result = await signInAnonymously(auth)
+  await ensureUserDocument(result.user, 'customer')
+  return result.user
+}
+
+export async function customerSignIn(email: string, password: string): Promise<User> {
+  const { auth } = requireFirebase()
+  if (auth.currentUser?.isAnonymous) await signOut(auth)
+  const result = await signInWithEmailAndPassword(auth, email, password)
+  await ensureUserDocument(result.user, 'customer')
+  return result.user
+}
+
+export async function customerCreateAccount(email: string, password: string): Promise<User> {
+  const { auth, db } = requireFirebase()
+  if (auth.currentUser?.isAnonymous) {
+    const credential = EmailAuthProvider.credential(email, password)
+    const result = await linkWithCredential(auth.currentUser, credential)
+    await updateDoc(doc(db, 'users', result.user.uid), { email: result.user.email ?? email, updatedAt: serverTimestamp() })
+    return result.user
+  }
+  const result = await createUserWithEmailAndPassword(auth, email, password)
   await ensureUserDocument(result.user, 'customer')
   return result.user
 }
@@ -114,6 +138,10 @@ function quoteFromDoc(snapshot: { id: string; data: () => Record<string, unknown
 
 function bookingFromDoc(snapshot: { id: string; data: () => Record<string, unknown> }): Booking {
   return { id: snapshot.id, ...(snapshot.data() as Omit<Booking, 'id'>) }
+}
+
+function reviewFromDoc(snapshot: { id: string; data: () => Record<string, unknown> }): Review {
+  return { id: snapshot.id, ...(snapshot.data() as Omit<Review, 'id'>) }
 }
 
 export function watchRequest(requestId: string, callback: (value: ServiceRequest | null) => void): Unsubscribe {
@@ -270,4 +298,35 @@ export function watchProviderBookings(providerId: string, callback: (items: Book
 export async function updateBookingStatus(bookingId: string, status: Booking['status']) {
   const { db } = requireFirebase()
   await updateDoc(doc(db, 'bookings', bookingId), { status, updatedAt: serverTimestamp() })
+}
+
+export function watchCustomerReviews(customerId: string, callback: (items: Review[]) => void): Unsubscribe {
+  const { db } = requireFirebase()
+  const q = query(collection(db, 'reviews'), where('customerId', '==', customerId), orderBy('createdAt', 'desc'))
+  return onSnapshot(q, (snapshot) => callback(snapshot.docs.map(reviewFromDoc)))
+}
+
+export function watchProviderReviews(providerId: string, callback: (items: Review[]) => void): Unsubscribe {
+  const { db } = requireFirebase()
+  const q = query(collection(db, 'reviews'), where('providerId', '==', providerId), orderBy('createdAt', 'desc'))
+  return onSnapshot(q, (snapshot) => callback(snapshot.docs.map(reviewFromDoc)))
+}
+
+export async function submitReview(booking: Booking, rating: number, comment: string) {
+  const { auth, db } = requireFirebase()
+  const user = auth.currentUser
+  if (!user || user.uid !== booking.customerId) throw new Error('Only the customer who booked this job can review it.')
+  if (booking.status !== 'completed') throw new Error('You can review a job after it is marked completed.')
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new Error('Choose a rating from 1 to 5.')
+  await setDoc(doc(db, 'reviews', booking.id), {
+    bookingId: booking.id,
+    requestId: booking.requestId,
+    customerId: booking.customerId,
+    providerId: booking.providerId,
+    providerName: booking.providerName,
+    rating,
+    comment: comment.trim() || null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
 }
