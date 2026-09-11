@@ -18,150 +18,64 @@ import {
 } from './lib/data'
 import type { Booking, ProviderProfile, Quote, Review, ServiceRequest } from './types'
 
-const serviceCategories = ['Home services', 'Send & errands', 'Auto services', 'Beauty', 'Local services']
+const categories = ['Home services', 'Send & errands', 'Auto services', 'Beauty', 'Local services']
+type Tab = 'overview' | 'requests' | 'quotes' | 'jobs' | 'profile' | 'notifications'
 
-type Panel = 'overview' | 'requests' | 'quotes' | 'jobs' | 'profile' | 'notifications'
-
-function formatRequestAlert(profile: ProviderProfile, request: ServiceRequest) {
-  const timing = request.urgency === 'now' ? 'needed now' : request.urgency === 'today' ? 'needed today' : `scheduled for ${request.scheduledFor || 'later'}`
-  return `Hello ${profile.businessName},\n\nYou have a new Asanib request.\n\n${request.query}\nLocation: ${request.location}\n${request.budget ? `Budget: up to AED ${request.budget}\n` : ''}Timing: ${timing}\n\nOpen Asanib to send your quote.`
+function requestMessage(profile: ProviderProfile, request?: ServiceRequest) {
+  if (!request) return `Hello ${profile.businessName},\n\nYou have a new Asanib request matching your services.\n\nOpen Asanib to view the request and send your quote.`
+  const timing = request.urgency === 'now' ? 'Needed now' : request.urgency === 'today' ? 'Needed today' : `Scheduled: ${request.scheduledFor || 'Later'}`
+  return `Hello ${profile.businessName},\n\nYou have a new Asanib request.\n\n${request.query}\nLocation: ${request.location}\n${request.budget ? `Budget: up to AED ${request.budget}\n` : ''}${timing}\n\nOpen Asanib to view the request and send your quote.`
 }
 
-function ProviderAuth() {
+function AuthPanel() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-
   async function submit(event: FormEvent) {
-    event.preventDefault()
-    setBusy(true)
-    setError('')
-    try {
-      if (mode === 'signin') await providerSignIn(email.trim(), password)
-      else await providerSignUp(email.trim(), password)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not continue.')
-    }
+    event.preventDefault(); setBusy(true); setError('')
+    try { mode === 'signin' ? await providerSignIn(email.trim(), password) : await providerSignUp(email.trim(), password) }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not continue.') }
     setBusy(false)
   }
-
-  return <main className="provider-auth-shell">
-    <a className="brand" href="/">asanib<span>.</span></a>
-    <section className="provider-auth-card">
-      <span className="app-kicker">ASANIB FOR PROVIDERS</span>
-      <h1>{mode === 'signin' ? 'Sign in to your business workspace' : 'Create your provider account'}</h1>
-      <p>Receive relevant local requests, quote quickly and manage jobs from one place.</p>
-      <div className="provider-auth-tabs">
-        <button className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>Sign in</button>
-        <button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')}>Create account</button>
-      </div>
-      {error && <div className="notice error">{error}</div>}
-      <form onSubmit={submit} className="provider-auth-form">
-        <label>Email<input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-        <label>Password<input type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-        <button className="primary" disabled={busy}>{busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create provider account'}</button>
-      </form>
-      <p className="legal-mini">By continuing, you agree to the <a href="/terms">Terms & Conditions</a> and acknowledge the <a href="/privacy">Privacy Policy</a>.</p>
-    </section>
-  </main>
+  return <main className="provider-auth-shell"><a className="brand" href="/">asanib<span>.</span></a><section className="provider-auth-card"><span className="app-kicker">ASANIB FOR PROVIDERS</span><h1>{mode === 'signin' ? 'Business sign in' : 'Join as a provider'}</h1><p>Receive matched local requests, send quotes and manage jobs from your Asanib workspace.</p><div className="provider-auth-tabs"><button className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>Sign in</button><button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')}>Create account</button></div>{error && <div className="notice error">{error}</div>}<form className="provider-auth-form" onSubmit={submit}><label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label>Password<input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></label><button className="primary" disabled={busy}>{busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create account'}</button></form><p className="legal-mini">By continuing, you agree to the <a href="/terms">Terms & Conditions</a> and acknowledge the <a href="/privacy">Privacy Policy</a>.</p></section></main>
 }
 
-function QuoteComposer({ request, profile, onDone }: { request: ServiceRequest; profile: ProviderProfile; onDone: () => void }) {
+function ProfileForm({ profile }: { profile: ProviderProfile | null }) {
+  const [businessName, setBusinessName] = useState(profile?.businessName || '')
+  const [phone, setPhone] = useState(profile?.phone || '')
+  const [whatsapp, setWhatsapp] = useState(profile?.whatsapp || '')
+  const [areas, setAreas] = useState((profile?.areas || []).join(', '))
+  const [selected, setSelected] = useState<string[]>(profile?.categories || [])
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  useEffect(() => { if (profile) { setBusinessName(profile.businessName); setPhone(profile.phone); setWhatsapp(profile.whatsapp || ''); setAreas(profile.areas.join(', ')); setSelected(profile.categories) } }, [profile])
+  async function save(event: FormEvent) {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    try {
+      await saveProviderProfile({ businessName, phone, whatsapp, areas: areas.split(',').map((x) => x.trim()).filter(Boolean), categories: selected, availableNow: profile?.availableNow || false, createdAt: profile?.createdAt, updatedAt: profile?.updatedAt })
+      setMessage('Business profile saved.')
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not save profile.') }
+    setBusy(false)
+  }
+  return <form className="provider-card full-card provider-profile-form" onSubmit={save}><div className="section-heading"><div><span>BUSINESS PROFILE</span><h2>Business details and matching</h2></div></div>{message && <div className="account-success">{message}</div>}{error && <div className="notice error">{error}</div>}<div className="profile-grid"><label>Business name<input value={businessName} onChange={(e) => setBusinessName(e.target.value)} required /></label><label>Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+971…" /></label><label>WhatsApp for Asanib alerts<input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+971…" /></label><label>Service areas<input value={areas} onChange={(e) => setAreas(e.target.value)} placeholder="Ajman, Sharjah, Dubai" /></label></div><div className="field-group"><span>Services</span><div className="category-toggle-grid">{categories.map((category) => <button type="button" key={category} className={selected.includes(category) ? 'selected' : ''} onClick={() => setSelected((current) => current.includes(category) ? current.filter((x) => x !== category) : [...current, category])}>{selected.includes(category) ? '✓ ' : ''}{category}</button>)}</div></div><button className="primary compact" disabled={busy || !businessName.trim() || !phone.trim() || selected.length === 0}>{busy ? 'Saving…' : 'Save profile'}</button></form>
+}
+
+function QuoteBox({ request, provider, done }: { request: ServiceRequest; provider: ProviderProfile; done: () => void }) {
   const [amount, setAmount] = useState(request.budget ? String(request.budget) : '')
   const [eta, setEta] = useState(request.urgency === 'now' ? '45' : '')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-
   async function submit(event: FormEvent) {
-    event.preventDefault()
-    setBusy(true)
-    setError('')
-    try {
-      await submitQuote({
-        requestId: request.id,
-        provider: profile,
-        amount: Number(amount),
-        etaMinutes: eta ? Number(eta) : undefined,
-        message: message.trim(),
-      })
-      onDone()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send quote.')
-    }
+    event.preventDefault(); setBusy(true); setError('')
+    try { await submitQuote({ requestId: request.id, provider, amount: Number(amount), etaMinutes: eta ? Number(eta) : undefined, message }); done() }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not send quote.') }
     setBusy(false)
   }
-
-  return <form className="quote-composer" onSubmit={submit}>
-    <label>Quote amount<div className="money-input"><b>AED</b><input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div></label>
-    <label>ETA in minutes<input inputMode="numeric" value={eta} onChange={(e) => setEta(e.target.value.replace(/\D/g, ''))} placeholder="Optional" /></label>
-    <label className="span-2">Message<textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="What is included? Any useful detail for the customer?" rows={3} /></label>
-    {error && <div className="notice error span-2">{error}</div>}
-    <button className="primary compact span-2" disabled={busy || !Number(amount)}>{busy ? 'Sending…' : 'Send quote'}</button>
-  </form>
-}
-
-function ProviderProfileForm({ user, profile }: { user: User; profile: ProviderProfile | null }) {
-  const [businessName, setBusinessName] = useState(profile?.businessName || '')
-  const [phone, setPhone] = useState(profile?.phone || '')
-  const [whatsapp, setWhatsapp] = useState(profile?.whatsapp || '')
-  const [categories, setCategories] = useState<string[]>(profile?.categories || [])
-  const [areas, setAreas] = useState((profile?.areas || []).join(', '))
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!profile) return
-    setBusinessName(profile.businessName)
-    setPhone(profile.phone)
-    setWhatsapp(profile.whatsapp || '')
-    setCategories(profile.categories)
-    setAreas(profile.areas.join(', '))
-  }, [profile])
-
-  function toggleCategory(category: string) {
-    setCategories((current) => current.includes(category) ? current.filter((item) => item !== category) : [...current, category])
-  }
-
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    setBusy(true)
-    setMessage('')
-    setError('')
-    try {
-      await saveProviderProfile({
-        businessName,
-        phone,
-        whatsapp,
-        categories,
-        areas: areas.split(',').map((item) => item.trim()).filter(Boolean),
-        availableNow: profile?.availableNow || false,
-        createdAt: profile?.createdAt,
-        updatedAt: profile?.updatedAt,
-      })
-      setMessage('Business profile saved.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save profile.')
-    }
-    setBusy(false)
-  }
-
-  return <form className="provider-profile-form" onSubmit={submit}>
-    <div className="section-heading"><div><span>BUSINESS PROFILE</span><h2>How customers see your business</h2></div><small>{user.email}</small></div>
-    {message && <div className="account-success">{message}</div>}
-    {error && <div className="notice error">{error}</div>}
-    <div className="profile-grid">
-      <label>Business name<input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Your business name" /></label>
-      <label>Phone<input required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+971…" /></label>
-      <label>WhatsApp number<input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+971…" /></label>
-      <label>Service areas<input value={areas} onChange={(e) => setAreas(e.target.value)} placeholder="Ajman, Sharjah, Dubai" /></label>
-    </div>
-    <div className="field-group"><span>Services</span><div className="category-toggle-grid">{serviceCategories.map((category) => <button type="button" className={categories.includes(category) ? 'selected' : ''} onClick={() => toggleCategory(category)} key={category}>{categories.includes(category) ? '✓ ' : ''}{category}</button>)}</div></div>
-    <button className="primary compact" disabled={busy || !businessName.trim() || !phone.trim() || !categories.length}>{busy ? 'Saving…' : 'Save business profile'}</button>
-  </form>
+  return <form className="quote-composer" onSubmit={submit}><label>Quote<div className="money-input"><b>AED</b><input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div></label><label>ETA minutes<input inputMode="numeric" value={eta} onChange={(e) => setEta(e.target.value.replace(/\D/g, ''))} /></label><label className="span-2">Message<textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="What is included?" /></label>{error && <div className="notice error span-2">{error}</div>}<button className="primary compact span-2" disabled={busy || !Number(amount)}>{busy ? 'Sending…' : 'Send quote'}</button></form>
 }
 
 export default function ProviderHub() {
@@ -172,108 +86,50 @@ export default function ProviderHub() {
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
-  const [panel, setPanel] = useState<Panel>('overview')
-  const [quotingId, setQuotingId] = useState<string | null>(null)
-  const [actionError, setActionError] = useState('')
+  const [tab, setTab] = useState<Tab>('overview')
+  const [quoting, setQuoting] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   useEffect(() => watchAuth((next) => { setUser(next); setReady(true) }), [])
   useEffect(() => {
     if (!user || user.isAnonymous) return
-    const stops = [
-      watchProviderProfile(user.uid, setProfile),
-      watchOpenRequests(setRequests),
-      watchMyProviderQuotes(user.uid, setQuotes),
-      watchProviderBookings(user.uid, setBookings),
-      watchProviderReviews(user.uid, setReviews),
-    ]
+    const stops = [watchProviderProfile(user.uid, setProfile), watchOpenRequests(setRequests), watchMyProviderQuotes(user.uid, setQuotes), watchProviderBookings(user.uid, setBookings), watchProviderReviews(user.uid, setReviews)]
     return () => stops.forEach((stop) => stop())
   }, [user])
 
-  const matching = useMemo(() => profile ? matchingRequests(profile, requests) : [], [profile, requests])
-  const activeJobs = bookings.filter((item) => item.status === 'booked' || item.status === 'in_progress')
-  const completedJobs = bookings.filter((item) => item.status === 'completed')
-  const pendingQuotes = quotes.filter((item) => item.status === 'pending')
-  const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + item.rating, 0) / reviews.length : 0
+  const matches = useMemo(() => profile ? matchingRequests(profile, requests) : [], [profile, requests])
+  const active = bookings.filter((x) => x.status === 'booked' || x.status === 'in_progress')
+  const avg = reviews.length ? reviews.reduce((sum, x) => sum + x.rating, 0) / reviews.length : 0
 
   if (!ready) return <main className="provider-loading">Loading Asanib…</main>
-  if (!user || user.isAnonymous) return <ProviderAuth />
+  if (!user || user.isAnonymous) return <AuthPanel />
 
-  async function toggleAvailability() {
+  async function availability() {
     if (!profile) return
-    setActionError('')
-    try {
-      await setProviderAvailability(user!.uid, !profile.availableNow)
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not update availability.')
-    }
+    setError('')
+    try { await setProviderAvailability(user!.uid, !profile.availableNow) }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not update availability.') }
   }
 
-  async function setBooking(booking: Booking, status: Booking['status']) {
-    setActionError('')
-    try {
-      await updateBookingStatus(booking.id, status)
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not update job.')
-    }
+  async function job(booking: Booking, status: Booking['status']) {
+    setError('')
+    try { await updateBookingStatus(booking.id, status) }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not update job.') }
   }
 
-  const sampleRequest = matching[0]
-  const whatsappPreview = profile && sampleRequest ? formatRequestAlert(profile, sampleRequest) : profile ? `Hello ${profile.businessName},\n\nYou have a new Asanib request matching your services. Open Asanib to view the job and send your quote.` : 'Complete your business profile to preview provider alerts.'
+  return <main className="provider-app-shell"><aside className="provider-sidebar"><a className="brand" href="/">asanib<span>.</span></a><div className="provider-business-mini"><div className="business-avatar">{profile?.businessName?.[0]?.toUpperCase() || 'B'}</div><div><strong>{profile?.businessName || 'Your business'}</strong><span>{profile?.approved ? 'Approved provider' : 'Approval pending'}</span></div></div><nav>{([['overview','Overview'],['requests',`Requests${matches.length ? ` · ${matches.length}` : ''}`],['quotes','Quotes'],['jobs',`Jobs${active.length ? ` · ${active.length}` : ''}`],['profile','Business profile'],['notifications','Notifications']] as [Tab,string][]).map(([id,label]) => <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>{label}</button>)}</nav><div className="provider-sidebar-bottom"><a href="/">Customer app</a><button onClick={() => void logOut()}>Sign out</button></div></aside><section className="provider-workspace"><header className="provider-workspace-header"><div><span className="app-kicker">PROVIDER WORKSPACE</span><h1>{profile?.businessName || 'Set up your business'}</h1></div><div className="availability-control"><span><i className={profile?.availableNow ? 'online' : ''} />{profile?.availableNow ? 'Available now' : 'Not taking urgent jobs'}</span><button disabled={!profile} onClick={() => void availability()}>{profile?.availableNow ? 'Go offline' : 'Go available'}</button></div></header>{!profile && <div className="setup-banner"><strong>Finish your business profile to receive matched requests.</strong><button onClick={() => setTab('profile')}>Set up business</button></div>}{profile && !profile.approved && <div className="approval-banner"><strong>Awaiting Asanib approval.</strong><span>You can finish your setup now. Quoting unlocks after approval.</span></div>}{error && <div className="notice error">{error}</div>}
 
-  return <main className="provider-app-shell">
-    <aside className="provider-sidebar">
-      <a className="brand" href="/">asanib<span>.</span></a>
-      <div className="provider-business-mini"><div className="business-avatar">{profile?.businessName?.slice(0, 1).toUpperCase() || 'B'}</div><div><strong>{profile?.businessName || 'Your business'}</strong><span>{profile?.approved ? 'Verified provider' : 'Approval pending'}</span></div></div>
-      <nav>
-        {([
-          ['overview', 'Overview'],
-          ['requests', `Requests${matching.length ? ` · ${matching.length}` : ''}`],
-          ['quotes', 'Quotes'],
-          ['jobs', `Jobs${activeJobs.length ? ` · ${activeJobs.length}` : ''}`],
-          ['profile', 'Business profile'],
-          ['notifications', 'Notifications'],
-        ] as [Panel, string][]).map(([id, label]) => <button key={id} className={panel === id ? 'active' : ''} onClick={() => setPanel(id)}>{label}</button>)}
-      </nav>
-      <div className="provider-sidebar-bottom"><a href="/">Customer app</a><button onClick={() => void logOut()}>Sign out</button></div>
-    </aside>
+  {tab === 'overview' && <><div className="provider-stat-grid"><article><span>Matched requests</span><strong>{matches.length}</strong><small>Open opportunities</small></article><article><span>Pending quotes</span><strong>{quotes.filter((q) => q.status === 'pending').length}</strong><small>Awaiting customer</small></article><article><span>Active jobs</span><strong>{active.length}</strong><small>Booked or in progress</small></article><article><span>Rating</span><strong>{reviews.length ? avg.toFixed(1) : '—'}</strong><small>{reviews.length} review{reviews.length === 1 ? '' : 's'}</small></article></div><div className="provider-dashboard-grid"><section className="provider-card"><div className="card-title"><div><span>NEW REQUESTS</span><h2>Jobs you can respond to</h2></div><button onClick={() => setTab('requests')}>View all</button></div>{matches.slice(0,4).map((r) => <div className="request-row" key={r.id}><div><strong>{r.query}</strong><span>{r.location} · {r.urgency === 'now' ? 'Needed now' : r.urgency}</span></div><b>{r.budget ? `≤ AED ${r.budget}` : 'Open budget'}</b></div>)}{!matches.length && <div className="empty-state">No matching requests right now.</div>}</section><section className="provider-card"><div className="card-title"><div><span>ACTIVE JOBS</span><h2>Work in progress</h2></div><button onClick={() => setTab('jobs')}>Manage</button></div>{active.slice(0,4).map((b) => <div className="request-row" key={b.id}><div><strong>Booking {b.id.slice(0,8)}</strong><span>{b.status.replace('_',' ')}</span></div><b>AED {b.amount}</b></div>)}{!active.length && <div className="empty-state">No active jobs.</div>}</section></div></>}
 
-    <section className="provider-workspace">
-      <header className="provider-workspace-header">
-        <div><span className="app-kicker">PROVIDER WORKSPACE</span><h1>{profile?.businessName || 'Set up your business'}</h1></div>
-        <div className="availability-control"><span><i className={profile?.availableNow ? 'online' : ''} />{profile?.availableNow ? 'Available now' : 'Not taking urgent jobs'}</span><button disabled={!profile} onClick={() => void toggleAvailability()}>{profile?.availableNow ? 'Go offline' : 'Go available'}</button></div>
-      </header>
+  {tab === 'requests' && <section className="provider-card full-card"><div className="section-heading"><div><span>MATCHED REQUESTS</span><h2>Relevant work near you</h2></div><small>{matches.length} open</small></div>{matches.map((r) => <article className="provider-request-card" key={r.id}><div className="request-main"><div className="request-badges"><span>{r.category}</span><span className={r.urgency === 'now' ? 'urgent' : ''}>{r.urgency === 'now' ? 'Need it now' : r.urgency}</span></div><h3>{r.query}</h3><p>{r.location}{r.scheduledFor ? ` · ${r.scheduledFor}` : ''}</p></div><div className="request-side"><strong>{r.budget ? `Up to AED ${r.budget}` : 'Budget not set'}</strong><button className="primary compact" disabled={!profile?.approved} onClick={() => setQuoting(quoting === r.id ? null : r.id)}>{quoting === r.id ? 'Close' : 'Send quote'}</button></div>{quoting === r.id && profile && <QuoteBox request={r} provider={profile} done={() => setQuoting(null)} />}</article>)}{!matches.length && <div className="empty-state large">No open matched requests right now.</div>}</section>}
 
-      {!profile && <div className="setup-banner"><strong>Finish your business profile to start receiving matched requests.</strong><button onClick={() => setPanel('profile')}>Set up business</button></div>}
-      {profile && !profile.approved && <div className="approval-banner"><strong>Your business is awaiting Asanib approval.</strong><span>You can complete your profile now. Quoting becomes available after approval.</span></div>}
-      {actionError && <div className="notice error">{actionError}</div>}
+  {tab === 'quotes' && <section className="provider-card full-card"><div className="section-heading"><div><span>QUOTES</span><h2>Your sent quotes</h2></div><small>{quotes.length} total</small></div><div className="data-list">{quotes.map((q) => <div className="data-row" key={q.id}><div><strong>AED {q.amount}</strong><span>Request {q.requestId.slice(0,8)}{q.etaMinutes ? ` · ETA ${q.etaMinutes} min` : ''}</span></div><span className={`status-pill ${q.status}`}>{q.status}</span></div>)}{!quotes.length && <div className="empty-state large">No quotes yet.</div>}</div></section>}
 
-      {panel === 'overview' && <>
-        <div className="provider-stat-grid">
-          <article><span>Matched requests</span><strong>{matching.length}</strong><small>Open opportunities</small></article>
-          <article><span>Quotes awaiting decision</span><strong>{pendingQuotes.length}</strong><small>Customer has not chosen yet</small></article>
-          <article><span>Active jobs</span><strong>{activeJobs.length}</strong><small>Booked or in progress</small></article>
-          <article><span>Rating</span><strong>{reviews.length ? averageRating.toFixed(1) : '—'}</strong><small>{reviews.length} review{reviews.length === 1 ? '' : 's'}</small></article>
-        </div>
-        <div className="provider-dashboard-grid">
-          <section className="provider-card"><div className="card-title"><div><span>NEW REQUESTS</span><h2>Jobs you can respond to</h2></div><button onClick={() => setPanel('requests')}>View all</button></div>{matching.slice(0, 3).map((request) => <div className="request-row" key={request.id}><div><strong>{request.query}</strong><span>{request.location} · {request.urgency === 'now' ? 'Needed now' : request.urgency}</span></div><b>{request.budget ? `≤ AED ${request.budget}` : 'Open budget'}</b></div>)}{!matching.length && <div className="empty-state">No matching open requests right now.</div>}</section>
-          <section className="provider-card"><div className="card-title"><div><span>ACTIVE JOBS</span><h2>Work in progress</h2></div><button onClick={() => setPanel('jobs')}>Manage</button></div>{activeJobs.slice(0, 3).map((booking) => <div className="request-row" key={booking.id}><div><strong>{booking.providerName}</strong><span>Booking {booking.id.slice(0, 7)} · {booking.status.replace('_', ' ')}</span></div><b>AED {booking.amount}</b></div>)}{!activeJobs.length && <div className="empty-state">No active jobs yet.</div>}</section>
-        </div>
-      </>}
+  {tab === 'jobs' && <section className="provider-card full-card"><div className="section-heading"><div><span>JOBS</span><h2>Bookings and progress</h2></div><small>{bookings.length} total</small></div><div className="job-grid">{bookings.map((b) => <article className="job-card" key={b.id}><div><span className={`status-pill ${b.status}`}>{b.status.replace('_',' ')}</span><h3>Booking {b.id.slice(0,8)}</h3><p>AED {b.amount}</p></div><div className="job-actions">{b.status === 'booked' && <button className="primary compact" onClick={() => void job(b,'in_progress')}>Start job</button>}{b.status === 'in_progress' && <button className="primary compact" onClick={() => void job(b,'completed')}>Mark completed</button>}{(b.status === 'booked' || b.status === 'in_progress') && <button className="secondary compact" onClick={() => void job(b,'cancelled')}>Cancel</button>}</div></article>)}{!bookings.length && <div className="empty-state large">Accepted jobs will appear here.</div>}</div></section>}
 
-      {panel === 'requests' && <section className="provider-card full-card"><div className="section-heading"><div><span>MATCHED REQUESTS</span><h2>Relevant jobs near you</h2></div><small>{matching.length} open</small></div>{matching.map((request) => <article className="provider-request-card" key={request.id}><div className="request-main"><div className="request-badges"><span>{request.category}</span><span className={request.urgency === 'now' ? 'urgent' : ''}>{request.urgency === 'now' ? 'Need it now' : request.urgency}</span></div><h3>{request.query}</h3><p>{request.location}{request.scheduledFor ? ` · ${request.scheduledFor}` : ''}</p></div><div className="request-side"><strong>{request.budget ? `Up to AED ${request.budget}` : 'Budget not set'}</strong><button className="primary compact" disabled={!profile?.approved} onClick={() => setQuotingId(quotingId === request.id ? null : request.id)}>{quotingId === request.id ? 'Close quote' : 'Send quote'}</button></div>{quotingId === request.id && profile && <QuoteComposer request={request} profile={profile} onDone={() => setQuotingId(null)} />}</article>)}{!matching.length && <div className="empty-state large">You are all caught up. New matching jobs will appear here automatically.</div>}</section>}
+  {tab === 'profile' && <ProfileForm profile={profile} />}
 
-      {panel === 'quotes' && <section className="provider-card full-card"><div className="section-heading"><div><span>QUOTES</span><h2>Your sent quotes</h2></div><small>{quotes.length} total</small></div><div className="data-list">{quotes.map((quote) => <div className="data-row" key={quote.id}><div><strong>AED {quote.amount}</strong><span>Request {quote.requestId.slice(0, 8)}{quote.etaMinutes ? ` · ETA ${quote.etaMinutes} min` : ''}</span></div><span className={`status-pill ${quote.status}`}>{quote.status}</span></div>)}{!quotes.length && <div className="empty-state large">No quotes sent yet.</div>}</div></section>}
+  {tab === 'notifications' && <div className="notification-grid"><section className="provider-card"><div className="section-heading"><div><span>PUSH ALERTS</span><h2>Browser & PWA alerts</h2></div><span className="status-pill accepted">Live</span></div><p>Asanib can notify you in the browser/PWA when a matching request is created. “Available now” also controls whether urgent requests are matched to you.</p><button className="primary compact" disabled={!profile} onClick={() => void availability()}>{profile?.availableNow ? 'Currently available' : 'Go available'}</button></section><section className="provider-card"><div className="section-heading"><div><span>WHATSAPP ALERTS</span><h2>Messages sent by Asanib</h2></div><span className="status-pill pending">Coming next</span></div><p>You do not link a WhatsApp account. Asanib will operate one central WhatsApp connection and send matching request alerts to the WhatsApp number saved in your business profile.</p><div className="whatsapp-number"><span>Your alert number</span><strong>{profile?.whatsapp || 'Add a WhatsApp number in Business profile'}</strong></div>{profile && <div className="message-preview"><span>MESSAGE PREVIEW</span><pre>{requestMessage(profile, matches[0])}</pre></div>}<p className="integration-note">WhatsApp delivery is not marked active until the Asanib-operated sender session is connected. Browser/PWA push is the live notification channel today.</p></section></div>}
 
-      {panel === 'jobs' && <section className="provider-card full-card"><div className="section-heading"><div><span>JOBS</span><h2>Bookings and job progress</h2></div><small>{bookings.length} total</small></div><div className="job-grid">{bookings.map((booking) => <article className="job-card" key={booking.id}><div><span className={`status-pill ${booking.status}`}>{booking.status.replace('_', ' ')}</span><h3>Booking {booking.id.slice(0, 8)}</h3><p>AED {booking.amount}</p></div><div className="job-actions">{booking.status === 'booked' && <button className="primary compact" onClick={() => void setBooking(booking, 'in_progress')}>Start job</button>}{booking.status === 'in_progress' && <button className="primary compact" onClick={() => void setBooking(booking, 'completed')}>Mark completed</button>}{(booking.status === 'booked' || booking.status === 'in_progress') && <button className="secondary compact" onClick={() => void setBooking(booking, 'cancelled')}>Cancel</button>}</div></article>)}{!bookings.length && <div className="empty-state large">Accepted jobs will appear here.</div>}</div><div className="completed-summary">Completed jobs: <strong>{completedJobs.length}</strong></div></section>}
-
-      {panel === 'profile' && <section className="provider-card full-card"><ProviderProfileForm user={user} profile={profile} /></section>}
-
-      {panel === 'notifications' && <div className="notification-grid">
-        <section className="provider-card"><div className="section-heading"><div><span>PUSH ALERTS</span><h2>Browser & PWA notifications</h2></div><span className="status-pill accepted">Available</span></div><p>When you switch “Available now” on, Asanib can request notification permission and alert you when a matching customer request is created.</p><button className="primary compact" disabled={!profile} onClick={() => void toggleAvailability()}>{profile?.availableNow ? 'Notifications active while available' : 'Go available & enable alerts'}</button></section>
-        <section className="provider-card"><div className="section-heading"><div><span>WHATSAPP</span><h2>WhatsApp request alerts</h2></div><span className="status-pill pending">Linking planned</span></div><p>We are preparing a linked WhatsApp channel so a provider can connect a business WhatsApp account and receive matched requests in a structured message.</p><div className="whatsapp-number"><span>Saved WhatsApp</span><strong>{profile?.whatsapp || 'Add a WhatsApp number in Business profile'}</strong></div><div className="message-preview"><span>MESSAGE PREVIEW</span><pre>{whatsappPreview}</pre></div><p className="integration-note">The panel is ready for the transport layer, but Asanib does not currently claim that WhatsApp delivery is active. Until the approved WhatsApp integration is connected, browser/PWA push remains the live alert channel.</p></section>
-      </div>}
-
-      <footer className="workspace-footer"><span>Asanib is operated by <strong>JS Ventures LLC</strong>.</span><nav><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds</a></nav></footer>
-    </section>
-  </main>
+  <footer className="workspace-footer"><span>Asanib is operated by <strong>JS Ventures LLC</strong>.</span><nav><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds</a></nav></footer></section></main>
 }
