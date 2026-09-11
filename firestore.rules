@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // V1 starts locked. Open only the exact collections as each authenticated
+    // customer/provider flow is implemented and tested.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
