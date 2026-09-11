@@ -1,5 +1,7 @@
 {
   "rewrites": [
-    { "source": "/((?!.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/request/:path*", "destination": "/index.html" },
+    { "source": "/provider/:path*", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" }
   ]
 }
