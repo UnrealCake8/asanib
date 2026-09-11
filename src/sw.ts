@@ -6,7 +6,7 @@ import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 
 declare let self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<unknown> }
 
-precacheAndRoute(self.__WB_MANIFEST)
+precacheAndRoute(self.__WB_MANIFEST as never[])
 cleanupOutdatedCaches()
 
 const firebaseConfig = {
@@ -41,8 +41,8 @@ self.addEventListener('notificationclick', (event) => {
   const link = String(event.notification.data?.link || '/')
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    const existing = windows.find((client) => 'focus' in client)
-    if (existing && 'navigate' in existing) {
+    const existing = windows[0] as WindowClient | undefined
+    if (existing) {
       await existing.navigate(link)
       return existing.focus()
     }
