@@ -5,6 +5,8 @@ import {
   acceptQuote,
   cancelRequest,
   createServiceRequest,
+  customerCreateAccount,
+  customerSignIn,
   logOut,
   matchingRequests,
   providerSignIn,
@@ -12,9 +14,11 @@ import {
   saveProviderProfile,
   setProviderAvailability,
   submitQuote,
+  submitReview,
   updateBookingStatus,
   watchAuth,
   watchCustomerBookings,
+  watchCustomerReviews,
   watchMyProviderQuotes,
   watchMyRequests,
   watchOpenRequests,
@@ -24,7 +28,7 @@ import {
   watchRequest,
 } from './lib/data'
 import { setProviderApproved, watchAdminAccess, watchAllProviders, watchAllRequests } from './lib/admin'
-import type { Booking, ParsedRequest, ProviderProfile, Quote, ServiceRequest, ServiceRequestDraft, Urgency } from './types'
+import type { Booking, ParsedRequest, ProviderProfile, Quote, Review, ServiceRequest, ServiceRequestDraft, Urgency } from './types'
 
 const serviceCategories = ['Home services', 'Send & errands', 'Auto services', 'Beauty', 'Local services']
 const categoryCards = [
@@ -66,6 +70,92 @@ function ErrorBox({ message }: { message: string }) {
   return <div className="notice error">{message}</div>
 }
 
+function CustomerAccount({ user }: { user: User | null }) {
+  const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<'create' | 'signin'>('create')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    setMessage('')
+    try {
+      if (mode === 'create') {
+        await customerCreateAccount(email.trim(), password)
+        setMessage('Account saved. Your current Asanib history stays with you.')
+      } else {
+        await customerSignIn(email.trim(), password)
+        setMessage('Signed in.')
+      }
+      setPassword('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not complete sign in.')
+    }
+    setBusy(false)
+  }
+
+  const member = Boolean(user && !user.isAnonymous)
+  return <div className="customer-account">
+    <button className="account-trigger" type="button" onClick={() => setOpen((value) => !value)}>{member ? user?.email || 'Your account' : 'Customer sign in'}</button>
+    {open && <div className="account-popover">
+      {member ? <div className="member-box"><span>Signed in as</span><strong>{user?.email}</strong><button className="secondary small" type="button" onClick={logOut}>Sign out</button></div> : <>
+        <h3>{mode === 'create' ? 'Save your Asanib' : 'Welcome back'}</h3>
+        <p>{mode === 'create' ? 'Create an account so your requests and bookings are not tied only to this browser.' : 'Sign in to an existing customer account.'}</p>
+        <div className="account-tabs"><button type="button" className={mode === 'create' ? 'active' : ''} onClick={() => setMode('create')}>Create account</button><button type="button" className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>Sign in</button></div>
+        {error && <div className="account-error">{error}</div>}
+        {message && <div className="account-success">{message}</div>}
+        <form className="account-form" onSubmit={submit}>
+          <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
+          <label>Password<input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+          <button className="primary compact" disabled={busy}>{busy ? 'Working…' : mode === 'create' ? 'Create customer account' : 'Sign in'}</button>
+          {user?.isAnonymous && mode === 'create' && <p className="account-note">Your current guest requests and bookings stay attached because this upgrades the same account.</p>}
+          {user?.isAnonymous && mode === 'signin' && <p className="account-note">Signing into a different account switches away from this guest session.</p>}
+        </form>
+      </>}
+    </div>}
+  </div>
+}
+
+function ReviewForm({ booking, review }: { booking: Booking; review?: Review }) {
+  const [rating, setRating] = useState(review?.rating ?? 0)
+  const [comment, setComment] = useState(review?.comment ?? '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState(Boolean(review))
+
+  useEffect(() => {
+    if (review) {
+      setRating(review.rating)
+      setComment(review.comment ?? '')
+      setSaved(true)
+    }
+  }, [review])
+
+  if (booking.status !== 'completed') return null
+  if (saved && review) return <div className="review-saved"><strong><span className="review-stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span> Review submitted</strong>{review.comment && <p>{review.comment}</p>}</div>
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    if (!rating) return
+    setBusy(true)
+    setError('')
+    try {
+      await submitReview(booking, rating, comment)
+      setSaved(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not submit review.')
+    }
+    setBusy(false)
+  }
+
+  return <form className="review-panel" onSubmit={submit}><strong>How did the job go?</strong><p>Rate {booking.providerName}. Reviews are available only after a completed booking.</p><div className="star-row" aria-label="Rating from 1 to 5">{[1, 2, 3, 4, 5].map((value) => <button type="button" aria-label={`${value} star${value === 1 ? '' : 's'}`} className={value <= rating ? 'selected' : ''} onClick={() => setRating(value)} key={value}>★</button>)}</div><textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional: what went well, or what should others know?" />{error && <div className="account-error">{error}</div>}<button className="primary compact" disabled={!rating || busy}>{busy ? 'Submitting…' : 'Submit review'}</button></form>
+}
+
 function CustomerHome() {
   const { user } = useCurrentUser()
   const [queryText, setQueryText] = useState('')
@@ -75,6 +165,7 @@ function CustomerHome() {
   const [scheduledFor, setScheduledFor] = useState('')
   const [requests, setRequests] = useState<ServiceRequest[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -82,11 +173,13 @@ function CustomerHome() {
     if (!user || !firebaseConfigured) return
     const stopRequests = watchMyRequests(user.uid, setRequests)
     const stopBookings = watchCustomerBookings(user.uid, setBookings)
-    return () => { stopRequests(); stopBookings() }
+    const stopReviews = watchCustomerReviews(user.uid, setReviews)
+    return () => { stopRequests(); stopBookings(); stopReviews() }
   }, [user])
 
   const openCount = requests.filter((item) => item.status === 'open').length
   const activeBookings = bookings.filter((item) => item.status === 'booked' || item.status === 'in_progress').length
+  const reviewByBooking = new Map(reviews.map((review) => [review.bookingId, review]))
   const canSubmit = useMemo(() => firebaseConfigured && queryText.trim().length >= 8 && location.trim().length >= 2 && (urgency !== 'scheduled' || Boolean(scheduledFor)), [queryText, location, urgency, scheduledFor])
 
   function jumpToRequest(prompt: string) {
@@ -120,7 +213,7 @@ function CustomerHome() {
       <header className="topbar home-topbar">
         <a className="brand" href="/">asanib<span>.</span></a>
         <nav className="home-nav"><a href="#services">Services</a><a href="#how-it-works">How it works</a><a href="/provider">For providers</a></nav>
-        <a className="provider-pill" href="/provider">List your business</a>
+        <div className="home-account-actions"><CustomerAccount user={user} /><a className="provider-pill" href="/provider">List your business</a></div>
       </header>
 
       <section className="hero production-hero">
@@ -156,8 +249,10 @@ function CustomerHome() {
         <div className="example-strip"><span>Popular requests:</span>{examples.map((example) => <button key={example} onClick={() => jumpToRequest(example)}>{example}</button>)}</div>
       </section>
 
+      {user?.isAnonymous && (requests.length > 0 || bookings.length > 0) && <div className="save-history-card"><div><strong>Keep your requests if you change device.</strong><p>You are currently using a guest account. Create a customer account from “Customer sign in” above to keep this history with the same Firebase user.</p></div><button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Save my history</button></div>}
+
       {(requests.length > 0 || bookings.length > 0) && <section className="account-snapshot">
-        <div className="snapshot-copy"><span className="eyebrow">YOUR ASANIB</span><h2>Pick up where you left off.</h2><p>Your active requests and booked jobs stay right here on this device.</p></div>
+        <div className="snapshot-copy"><span className="eyebrow">YOUR ASANIB</span><h2>Pick up where you left off.</h2><p>{user && !user.isAnonymous ? 'Your account keeps your requests and bookings attached to you.' : 'Your active requests and bookings are currently attached to this guest session.'}</p></div>
         <div className="snapshot-stats"><div><strong>{openCount}</strong><span>Open requests</span></div><div><strong>{activeBookings}</strong><span>Active bookings</span></div><div><strong>{bookings.length}</strong><span>Total bookings</span></div></div>
       </section>}
 
@@ -168,7 +263,10 @@ function CustomerHome() {
 
       {bookings.length > 0 && <section className="dashboard-section home-dashboard">
         <div className="section-heading"><div><span className="section-kicker">BOOKINGS</span><h2>Your booked providers</h2></div><span>{bookings.length}</span></div>
-        <div className="booking-grid">{bookings.map((booking) => <article className="customer-booking-card" key={booking.id}><div className="booking-card-top"><div><strong>{booking.providerName}</strong><p>AED {booking.amount} · booking {booking.id.slice(0, 7)}</p></div><span className={`status ${booking.status}`}>{booking.status.replace('_', ' ')}</span></div><div className="booking-actions">{booking.providerPhone && <a href={`tel:${booking.providerPhone}`}>Call provider</a>}{booking.providerWhatsapp && <a href={`https://wa.me/${booking.providerWhatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">WhatsApp</a>}<a href={`/request/${booking.requestId}`}>View request</a></div></article>)}</div>
+        <div className="booking-grid">{bookings.map((booking) => {
+          const progress = booking.status === 'completed' ? 3 : booking.status === 'in_progress' ? 2 : booking.status === 'booked' ? 1 : 0
+          return <article className="customer-booking-card" key={booking.id}><div className="booking-card-top"><div><strong>{booking.providerName}</strong><p>AED {booking.amount} · booking {booking.id.slice(0, 7)}</p></div><span className={`status ${booking.status}`}>{booking.status.replace('_', ' ')}</span></div>{booking.status !== 'cancelled' && <div className="booking-progress" aria-label="Booking progress"><span className={progress >= 1 ? 'done' : ''} /><span className={progress >= 2 ? 'done' : ''} /><span className={progress >= 3 ? 'done' : ''} /></div>}<div className="booking-actions">{booking.providerPhone && <a href={`tel:${booking.providerPhone}`}>Call provider</a>}{booking.providerWhatsapp && <a href={`https://wa.me/${booking.providerWhatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">WhatsApp</a>}<a href={`/request/${booking.requestId}`}>View request</a></div><ReviewForm booking={booking} review={reviewByBooking.get(booking.id)} /></article>
+        })}</div>
       </section>}
 
       <section id="services" className="home-section services-section">
@@ -178,11 +276,11 @@ function CustomerHome() {
 
       <section id="how-it-works" className="home-section how-section">
         <div className="section-intro"><div><span className="eyebrow">HOW ASANIB WORKS</span><h2>Less searching. More getting it done.</h2></div><p>Asanib is built around a request, not a directory. You tell us the outcome you need; suitable providers decide whether to quote.</p></div>
-        <div className="steps-grid"><article><span>01</span><h3>Describe the job</h3><p>Tell us what you need, where you need it, your timing and an optional maximum budget.</p></article><article><span>02</span><h3>Receive quotes</h3><p>Approved providers can respond with their price, ETA and what is included.</p></article><article><span>03</span><h3>Choose who fits</h3><p>Compare your options and accept the quote you want. Asanib creates the booking.</p></article><article><span>04</span><h3>Get it done</h3><p>Contact the accepted provider directly, follow booking progress and keep everything tied to the request.</p></article></div>
+        <div className="steps-grid"><article><span>01</span><h3>Describe the job</h3><p>Tell us what you need, where you need it, your timing and an optional maximum budget.</p></article><article><span>02</span><h3>Receive quotes</h3><p>Approved providers can respond with their price, ETA and what is included.</p></article><article><span>03</span><h3>Choose who fits</h3><p>Compare your options and accept the quote you want. Asanib creates the booking.</p></article><article><span>04</span><h3>Get it done</h3><p>Contact the accepted provider directly, follow booking progress and review the completed job.</p></article></div>
       </section>
 
       <section className="home-section confidence-section">
-        <div className="confidence-main"><span className="eyebrow">BUILT FOR REAL-WORLD SERVICES</span><h2>Useful first. Flashy second.</h2><p>Asanib is not a list of random businesses dressed up as an AI answer. Provider accounts require approval before they can quote. Customers choose the quote; providers choose the jobs they want.</p><div className="confidence-points"><span>Provider approval controls</span><span>Quote-first marketplace</span><span>Clear booking states</span><span>Direct provider contact after booking</span></div></div>
+        <div className="confidence-main"><span className="eyebrow">BUILT FOR REAL-WORLD SERVICES</span><h2>Useful first. Flashy second.</h2><p>Asanib is not a list of random businesses dressed up as an AI answer. Provider accounts require approval before they can quote. Customers choose the quote; providers choose the jobs they want.</p><div className="confidence-points"><span>Provider approval controls</span><span>Quote-first marketplace</span><span>Persistent customer accounts</span><span>Direct provider contact after booking</span><span>Completed-job reviews</span></div></div>
         <aside className="need-now-card"><div className="pulse-dot" /><span>Need it now?</span><strong>Mark a request urgent.</strong><p>Providers who cover your category and service area can see the open job and respond with an ETA.</p><button onClick={() => { setUrgency('now'); jumpToRequest('I need someone who can help me right now with') }}>Post an urgent request</button></aside>
       </section>
 
@@ -225,7 +323,7 @@ function RequestPage({ requestId }: { requestId: string }) {
 
   if (!firebaseConfigured) return <main className="page"><ErrorBox message="Firebase is not configured." /></main>
   if (!ready) return <main className="page"><p>Loading…</p></main>
-  if (!user) return <main className="page"><ErrorBox message="This request belongs to a browser session that is no longer signed in." /></main>
+  if (!user) return <main className="page"><ErrorBox message="This request belongs to a browser session that is no longer signed in. Sign in from the Asanib homepage if you created a customer account." /></main>
 
   return <main className="page">
     <header className="topbar"><a className="back-link" href="/">← Requests</a><a className="brand" href="/">asanib<span>.</span></a><span /></header>
@@ -236,7 +334,8 @@ function RequestPage({ requestId }: { requestId: string }) {
         {error && <ErrorBox message={error} />}
         {request.status === 'open' && <div className="quote-section"><div className="section-heading"><h2>Provider quotes</h2><span>{quotes.length}</span></div>{quotes.length === 0 ? <div className="empty-state"><strong>No quotes yet.</strong><p>Approved providers matching this job can see it and respond.</p></div> : <div className="quote-grid">{quotes.map((quote) => <article className="quote-card" key={quote.id}><div className="quote-top"><div><strong>{quote.providerName}</strong><p>{quote.etaMinutes ? `ETA ${quote.etaMinutes} min` : 'ETA not supplied'}</p></div><b>AED {quote.amount}</b></div>{quote.message && <p className="quote-message">{quote.message}</p>}<button className="primary" disabled={working === quote.id} onClick={() => choose(quote)}>{working === quote.id ? 'Booking…' : 'Accept quote'}</button></article>)}</div>}
           <button className="danger-link" disabled={working === 'cancel'} onClick={cancel}>{working === 'cancel' ? 'Cancelling…' : 'Cancel request'}</button></div>}
-        {request.status === 'booked' && <div className="success-panel"><strong>Booked.</strong><p>You accepted a provider quote. Payment is handled directly with the provider in this V1. Your provider contact details are shown on the homepage booking card.</p></div>}
+        {request.status === 'booked' && <div className="success-panel"><strong>Booked.</strong><p>You accepted a provider quote. Payment is handled directly with the provider in this V1. Provider contact and live booking status are shown on your homepage.</p></div>}
+        {request.status === 'completed' && <div className="success-panel"><strong>Job completed.</strong><p>You can leave a review from your booking card on the homepage.</p></div>}
         {request.status === 'cancelled' && <div className="empty-state"><strong>Request cancelled.</strong></div>}
       </>}
     </section>
