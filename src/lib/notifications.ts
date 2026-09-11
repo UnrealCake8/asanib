@@ -52,7 +52,7 @@ export function beginNotificationPermissionRequest(): Promise<NotificationPermis
 
 export async function syncPushRegistration(permissionPromise?: Promise<NotificationPermission> | null) {
   if (!firebaseConfigured || !firebaseApp || !auth?.currentUser) return
-  if (!('Notification' in window)) return
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return
   const permission = permissionPromise ? await permissionPromise : Notification.permission
   if (permission !== 'granted') return
 
@@ -60,8 +60,12 @@ export async function syncPushRegistration(permissionPromise?: Promise<Notificat
   registrationInFlight = (async () => {
     const messaging = await setupListeners()
     if (!messaging) return
+    const serviceWorkerRegistration = await navigator.serviceWorker.ready
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
-    await register(messaging, vapidKey ? { vapidKey } : undefined)
+    await register(messaging, {
+      serviceWorkerRegistration,
+      ...(vapidKey ? { vapidKey } : {}),
+    })
   })().finally(() => { registrationInFlight = null })
   return registrationInFlight
 }
