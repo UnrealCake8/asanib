@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Asanib',
@@ -26,8 +29,8 @@ export default defineConfig({
           }
         ]
       },
-      workbox: {
-        navigateFallback: '/index.html'
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico}']
       }
     })
   ]
