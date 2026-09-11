@@ -7,8 +7,7 @@ export async function notifyUser(uid, title, body, link = '/') {
 
   const result = await adminMessaging.sendEachForMulticast({
     fids,
-    notification: { title, body },
-    data: { link },
+    data: { title, body, link },
     webpush: { fcmOptions: { link } },
   })
 
