@@ -9,7 +9,6 @@ import {
   type User,
 } from 'firebase/auth'
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -20,10 +19,10 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore'
 import { auth, db, firebaseConfigured } from './firebase'
+import { beginNotificationPermissionRequest, syncPushRegistration } from './notifications'
 import type {
   Booking,
   ParsedRequest,
@@ -38,6 +37,24 @@ function requireFirebase() {
     throw new Error('Firebase is not configured. Add the Firebase web app values to .env.local.')
   }
   return { auth, db }
+}
+
+async function apiPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const { auth } = requireFirebase()
+  const user = auth.currentUser
+  if (!user) throw new Error('Sign in is required.')
+  const token = await user.getIdToken()
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  })
+  const payload = await response.json().catch(() => ({})) as { error?: string } & T
+  if (!response.ok) throw new Error(payload.error || 'Asanib could not complete that action.')
+  return payload
 }
 
 export function watchAuth(callback: (user: User | null) => void): Unsubscribe {
@@ -61,6 +78,7 @@ export async function customerSignIn(email: string, password: string): Promise<U
   if (auth.currentUser?.isAnonymous) await signOut(auth)
   const result = await signInWithEmailAndPassword(auth, email, password)
   await ensureUserDocument(result.user, 'customer')
+  void syncPushRegistration()
   return result.user
 }
 
@@ -70,10 +88,12 @@ export async function customerCreateAccount(email: string, password: string): Pr
     const credential = EmailAuthProvider.credential(email, password)
     const result = await linkWithCredential(auth.currentUser, credential)
     await updateDoc(doc(db, 'users', result.user.uid), { email: result.user.email ?? email, updatedAt: serverTimestamp() })
+    void syncPushRegistration()
     return result.user
   }
   const result = await createUserWithEmailAndPassword(auth, email, password)
   await ensureUserDocument(result.user, 'customer')
+  void syncPushRegistration()
   return result.user
 }
 
@@ -88,6 +108,7 @@ export async function providerSignIn(email: string, password: string): Promise<U
   const { auth } = requireFirebase()
   const result = await signInWithEmailAndPassword(auth, email, password)
   await ensureUserDocument(result.user, 'provider')
+  void syncPushRegistration()
   return result.user
 }
 
@@ -111,10 +132,10 @@ async function ensureUserDocument(user: User, role: 'customer' | 'provider') {
 }
 
 export async function createServiceRequest(parsed: ParsedRequest): Promise<string> {
-  const { db } = requireFirebase()
-  const user = await ensureCustomerUser()
-  const ref = await addDoc(collection(db, 'requests'), {
-    customerId: user.uid,
+  const permissionPromise = beginNotificationPermissionRequest()
+  await ensureCustomerUser()
+  void syncPushRegistration(permissionPromise)
+  const result = await apiPost<{ id: string; matchCount: number }>('/api/create-request', {
     query: parsed.query,
     location: parsed.location,
     budget: parsed.budget ?? null,
@@ -122,10 +143,8 @@ export async function createServiceRequest(parsed: ParsedRequest): Promise<strin
     scheduledFor: parsed.scheduledFor ?? null,
     category: parsed.category,
     summary: parsed.summary,
-    status: 'open',
-    createdAt: serverTimestamp(),
   })
-  return ref.id
+  return result.id
 }
 
 function requestFromDoc(snapshot: { id: string; data: () => Record<string, unknown> }): ServiceRequest {
@@ -192,26 +211,31 @@ export function watchProviderProfile(uid: string, callback: (profile: ProviderPr
 }
 
 export async function setProviderAvailability(uid: string, availableNow: boolean) {
+  const permissionPromise = availableNow ? beginNotificationPermissionRequest() : null
   const { db } = requireFirebase()
   await updateDoc(doc(db, 'providers', uid), { availableNow, updatedAt: serverTimestamp() })
+  if (availableNow) void syncPushRegistration(permissionPromise)
 }
 
 export function watchOpenRequests(callback: (items: ServiceRequest[]) => void): () => undefined {
-  const { db } = requireFirebase()
-  const q = query(collection(db, 'requests'), where('status', '==', 'open'), orderBy('createdAt', 'desc'))
-  const stop = onSnapshot(q, (snapshot) => callback(snapshot.docs.map(requestFromDoc)))
+  const { auth, db } = requireFirebase()
+  const providerId = auth.currentUser?.uid
+  if (!providerId) {
+    callback([])
+    return () => undefined
+  }
+  const q = query(collection(db, 'providerMatches', providerId, 'requests'), orderBy('createdAt', 'desc'))
+  const stop = onSnapshot(q, (snapshot) => callback(snapshot.docs
+    .map((snapshot) => {
+      const data = snapshot.data() as Record<string, unknown>
+      return { id: String(data.requestId || snapshot.id), ...(data as Omit<ServiceRequest, 'id'>) }
+    })
+    .filter((request) => request.status === 'open')))
   return () => { stop(); return undefined }
 }
 
-export function matchingRequests(profile: ProviderProfile, requests: ServiceRequest[]) {
-  const categories = new Set(profile.categories.map((item) => item.toLowerCase()))
-  const areas = profile.areas.map((item) => item.toLowerCase())
-  return requests.filter((request) => {
-    const categoryMatch = categories.has(request.category.toLowerCase()) || categories.has('local services')
-    const location = request.location.toLowerCase()
-    const areaMatch = areas.length === 0 || areas.some((area) => location.includes(area) || area.includes(location))
-    return categoryMatch && areaMatch
-  })
+export function matchingRequests(_profile: ProviderProfile, requests: ServiceRequest[]) {
+  return requests.filter((request) => request.status === 'open')
 }
 
 export async function submitQuote(input: {
@@ -221,20 +245,13 @@ export async function submitQuote(input: {
   etaMinutes?: number
   message?: string
 }) {
-  const { db } = requireFirebase()
   if (!input.provider.approved) throw new Error('Your provider account must be approved before quoting.')
-  if (input.amount <= 0) throw new Error('Enter a valid quote amount.')
-  await addDoc(collection(db, 'quotes'), {
+  void syncPushRegistration()
+  await apiPost<{ id: string }>('/api/submit-quote', {
     requestId: input.requestId,
-    providerId: input.provider.id,
-    providerName: input.provider.businessName,
-    providerPhone: input.provider.phone,
-    providerWhatsapp: input.provider.whatsapp ?? null,
     amount: input.amount,
     etaMinutes: input.etaMinutes ?? null,
-    message: input.message?.trim() || null,
-    status: 'pending',
-    createdAt: serverTimestamp(),
+    message: input.message ?? '',
   })
 }
 
@@ -245,42 +262,13 @@ export function watchMyProviderQuotes(providerId: string, callback: (items: Quot
 }
 
 export async function acceptQuote(request: ServiceRequest, quote: Quote) {
-  const { auth, db } = requireFirebase()
-  const user = auth.currentUser
-  if (!user || user.uid !== request.customerId) throw new Error('Only the customer who created this request can accept a quote.')
-  if (request.status !== 'open') throw new Error('This request is no longer open.')
   if (quote.requestId !== request.id) throw new Error('Quote does not belong to this request.')
-
-  const bookingRef = doc(collection(db, 'bookings'))
-  const batch = writeBatch(db)
-  batch.update(doc(db, 'requests', request.id), {
-    status: 'booked',
-    acceptedQuoteId: quote.id,
-    bookedAt: serverTimestamp(),
-  })
-  batch.update(doc(db, 'quotes', quote.id), { status: 'accepted' })
-  batch.set(bookingRef, {
-    requestId: request.id,
-    customerId: request.customerId,
-    providerId: quote.providerId,
-    providerName: quote.providerName,
-    providerPhone: quote.providerPhone ?? null,
-    providerWhatsapp: quote.providerWhatsapp ?? null,
-    quoteId: quote.id,
-    amount: quote.amount,
-    status: 'booked',
-    createdAt: serverTimestamp(),
-  })
-  await batch.commit()
-  return bookingRef.id
+  const result = await apiPost<{ bookingId: string }>('/api/accept-quote', { requestId: request.id, quoteId: quote.id })
+  return result.bookingId
 }
 
 export async function cancelRequest(request: ServiceRequest) {
-  const { auth, db } = requireFirebase()
-  const user = auth.currentUser
-  if (!user || user.uid !== request.customerId) throw new Error('You cannot cancel this request.')
-  if (request.status !== 'open') throw new Error('Only open requests can be cancelled.')
-  await updateDoc(doc(db, 'requests', request.id), { status: 'cancelled', cancelledAt: serverTimestamp() })
+  await apiPost<{ ok: true }>('/api/cancel-request', { requestId: request.id })
 }
 
 export function watchCustomerBookings(customerId: string, callback: (items: Booking[]) => void): Unsubscribe {
@@ -296,8 +284,7 @@ export function watchProviderBookings(providerId: string, callback: (items: Book
 }
 
 export async function updateBookingStatus(bookingId: string, status: Booking['status']) {
-  const { db } = requireFirebase()
-  await updateDoc(doc(db, 'bookings', bookingId), { status, updatedAt: serverTimestamp() })
+  await apiPost<{ ok: true }>('/api/update-booking', { bookingId, status })
 }
 
 export function watchCustomerReviews(customerId: string, callback: (items: Review[]) => void): Unsubscribe {
