@@ -2,6 +2,10 @@
   "rewrites": [
     { "source": "/request/:path*", "destination": "/index.html" },
     { "source": "/provider/:path*", "destination": "/index.html" },
-    { "source": "/admin/:path*", "destination": "/index.html" }
+    { "source": "/admin/:path*", "destination": "/index.html" },
+    { "source": "/privacy", "destination": "/index.html" },
+    { "source": "/terms", "destination": "/index.html" },
+    { "source": "/cookies", "destination": "/index.html" },
+    { "source": "/refunds", "destination": "/index.html" }
   ]
 }
