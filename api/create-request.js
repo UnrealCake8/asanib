@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
 import { notifyUser } from './_notify.js'
+import { sendProviderRequestAlert } from './_whatsapp.js'
 
 function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max)
@@ -64,12 +65,15 @@ export default async function handler(req, res) {
     }
     await batch.commit()
 
-    await Promise.allSettled(providers.map((provider) => notifyUser(
-      provider.id,
-      request.urgency === 'now' ? 'Urgent job near you' : 'New matching Asanib request',
-      `${request.category} in ${request.location}${request.budget ? ` · up to AED ${request.budget}` : ''}`,
-      '/provider',
-    )))
+    await Promise.allSettled(providers.flatMap((provider) => [
+      notifyUser(
+        provider.id,
+        request.urgency === 'now' ? 'Urgent job near you' : 'New matching Asanib request',
+        `${request.category} in ${request.location}${request.budget ? ` · up to AED ${request.budget}` : ''}`,
+        '/provider',
+      ),
+      sendProviderRequestAlert(provider, request, requestRef.id),
+    ]))
 
     return res.status(201).json({ id: requestRef.id, matchCount: providers.length })
   } catch (error) {
