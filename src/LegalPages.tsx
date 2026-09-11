@@ -1,0 +1,73 @@
+type LegalKind = 'privacy' | 'terms' | 'cookies' | 'refunds'
+
+const updated = '11 September 2026'
+
+const sections: Record<LegalKind, { title: string; intro: string; blocks: { heading: string; body: string[] }[] }> = {
+  privacy: {
+    title: 'Privacy Policy',
+    intro: 'This Privacy Policy explains how Asanib collects, uses and protects information when customers and service providers use the platform.',
+    blocks: [
+      { heading: '1. Who operates Asanib', body: ['Asanib is operated by JS Ventures LLC in the United Arab Emirates. References to “Asanib”, “we”, “us” or “our” in this policy refer to the Asanib service operated by JS Ventures LLC.'] },
+      { heading: '2. Information we collect', body: ['We may collect account information such as email address, business name and contact details; service-request information such as the job description, area, budget and timing; provider information such as service categories, service areas, availability, phone and WhatsApp number; booking, quote and review information; and technical information needed to secure and operate the service.', 'Customers should avoid putting unnecessary sensitive personal information in service-request descriptions.'] },
+      { heading: '3. How we use information', body: ['We use information to operate accounts, match customer requests with relevant providers, allow providers to quote, manage bookings, deliver service notifications, prevent abuse, provide support and improve the reliability of Asanib.', 'Where a provider has supplied a WhatsApp number for job alerts, Asanib may use that number to send service-related notifications from an Asanib-operated WhatsApp channel once that notification channel is enabled.'] },
+      { heading: '4. Sharing', body: ['Customer request details are shared only as reasonably necessary with relevant provider accounts so they can decide whether to quote. Provider details may be shown to customers when needed to compare quotes or complete a booking.', 'We may use infrastructure and service providers such as Firebase, Vercel and Cloudflare to operate the platform. They process technical data in accordance with their own terms and our configuration.'] },
+      { heading: '5. Data retention and security', body: ['We retain information for as long as reasonably necessary to operate the service, maintain records, resolve disputes and meet legal obligations. We use reasonable technical and organisational measures to protect information, but no online system can guarantee absolute security.'] },
+      { heading: '6. Your choices', body: ['You may stop using Asanib at any time. Providers can update their business profile and availability. You may contact us to request access, correction or deletion of eligible personal information, subject to applicable legal and operational requirements.'] },
+      { heading: '7. Contact', body: ['Privacy and support requests relating to Asanib should be directed to JS Ventures LLC through the contact details published in the Asanib service.'] },
+    ],
+  },
+  terms: {
+    title: 'Terms & Conditions',
+    intro: 'These Terms & Conditions govern access to and use of Asanib by customers, service providers and other users.',
+    blocks: [
+      { heading: '1. Operator and platform role', body: ['Asanib is operated by JS Ventures LLC in the United Arab Emirates. Asanib is a technology platform that helps customers describe a service need, receive responses from eligible providers and manage a booking.', 'Unless expressly stated otherwise for a specific service, the service provider is responsible for performing the underlying service. Asanib does not become the provider of a third-party service merely by facilitating a request, quote or booking.'] },
+      { heading: '2. Accounts and eligibility', body: ['Users must provide accurate information and keep account credentials secure. Provider accounts may require approval before they can receive or quote on customer requests. Asanib may refuse, suspend or remove accounts where reasonably necessary for safety, misuse, fraud, legal compliance or platform integrity.'] },
+      { heading: '3. Customer requests', body: ['Customers must describe requests accurately and lawfully. Requests must not seek illegal, unsafe or prohibited goods or services. Customers remain responsible for checking whether a provider and proposed service are suitable for their needs.'] },
+      { heading: '4. Provider responsibilities', body: ['Providers are responsible for maintaining accurate business information, qualifications, licences, insurance and permits where applicable. Quotes should clearly reflect the expected price and scope. Providers are responsible for the quality, legality and safe delivery of their services.'] },
+      { heading: '5. Quotes, bookings and payment', body: ['A quote is an offer from a provider. A booking is formed when the customer accepts a quote through Asanib. In the current version of Asanib, payment is handled directly between the customer and provider unless Asanib clearly states otherwise before checkout.', 'Any taxes, receipts, invoices or payment obligations relating to a provider’s service remain the responsibility of the relevant parties unless applicable law requires otherwise.'] },
+      { heading: '6. Cancellations, disputes and refunds', body: ['Because Asanib currently does not collect the service payment, refunds for amounts paid directly to a provider are normally handled between the customer and that provider. See the Refund Policy for more detail.', 'Asanib may assist with platform records or communications, but this does not guarantee a particular dispute outcome.'] },
+      { heading: '7. Communications', body: ['Users may receive transactional communications needed to operate the service, including request, quote, booking and account notifications. Providers that supply a WhatsApp number may receive operational job alerts from an Asanib-operated WhatsApp channel if and when that feature is enabled.'] },
+      { heading: '8. Acceptable use', body: ['Do not interfere with the platform, impersonate others, submit fraudulent requests or quotes, misuse contact information, scrape protected data, circumvent security controls or use Asanib to facilitate unlawful activity.'] },
+      { heading: '9. Availability and liability', body: ['We aim to keep Asanib reliable but do not guarantee uninterrupted availability or that every request will receive a quote. To the extent permitted by applicable law, JS Ventures LLC is not responsible for losses caused by the independent acts or omissions of third-party providers. Nothing in these terms excludes rights or liabilities that cannot legally be excluded.'] },
+      { heading: '10. Changes', body: ['We may update these terms as Asanib evolves. The updated date will be shown on this page. Continued use after an update may constitute acceptance where permitted by law.'] },
+    ],
+  },
+  cookies: {
+    title: 'Cookie & Storage Policy',
+    intro: 'This policy explains how Asanib uses cookies, local storage and similar browser technologies.',
+    blocks: [
+      { heading: '1. Essential storage', body: ['Asanib uses essential browser and authentication storage to keep users signed in, maintain sessions, secure requests and support core app functionality. Firebase Authentication and related infrastructure may store identifiers needed for these purposes.'] },
+      { heading: '2. Notifications and app functionality', body: ['If you enable browser or PWA notifications, Asanib may store a notification registration identifier so service-related alerts can be delivered to your device. Service-worker and PWA storage may also be used to make the app load and function reliably.'] },
+      { heading: '3. Analytics and advertising', body: ['Asanib does not currently state that it uses optional behavioural advertising or cross-site tracking. If optional analytics, advertising or other non-essential tracking is introduced, this policy and any consent controls will be updated as appropriate.'] },
+      { heading: '4. Managing storage', body: ['You can clear browser storage, sign out or change browser permissions. Blocking essential storage may prevent authentication, notifications or other parts of Asanib from working correctly.'] },
+    ],
+  },
+  refunds: {
+    title: 'Refund & Cancellation Policy',
+    intro: 'This policy explains how cancellations and refunds work in the current version of Asanib.',
+    blocks: [
+      { heading: '1. Current payment model', body: ['Asanib currently allows customers to request services, receive quotes and accept a provider, but the service payment is made directly to the provider rather than collected by Asanib.'] },
+      { heading: '2. Refunds for provider payments', body: ['Because JS Ventures LLC does not currently hold the customer’s service payment, Asanib generally cannot directly reverse or refund money paid to a provider. Any refund for a direct provider payment is subject to the provider’s terms, the agreement between the customer and provider, and applicable law.'] },
+      { heading: '3. Cancelling an Asanib request', body: ['An open request may be cancelled in the app before a quote is accepted. Once a quote has been accepted and a booking created, cancellation may affect the provider’s time or costs and should be handled promptly with the provider.'] },
+      { heading: '4. If Asanib later collects payments', body: ['If Asanib introduces in-platform payments, deposits, booking fees or paid platform services, this policy will be updated before those payment features are made available. The applicable refund terms will be shown before the relevant payment is taken.'] },
+      { heading: '5. Disputes', body: ['If there is a disagreement about a booked service, users should first try to resolve it directly and promptly. Asanib may review platform records and assist with communications where appropriate, but does not guarantee a refund or specific outcome.'] },
+    ],
+  },
+}
+
+export function LegalFooter() {
+  return <footer className="legal-footer"><div><a className="brand small-brand" href="/">asanib<span>.</span></a><p>Operated by <strong>JS Ventures LLC</strong> in the United Arab Emirates.</p></div><nav><a href="/privacy">Privacy</a><a href="/terms">Terms & Conditions</a><a href="/cookies">Cookie Policy</a><a href="/refunds">Refund Policy</a><a href="/provider">For providers</a></nav></footer>
+}
+
+export default function LegalPage({ kind }: { kind: LegalKind }) {
+  const page = sections[kind]
+  return <main className="legal-shell">
+    <header className="legal-topbar"><a className="brand" href="/">asanib<span>.</span></a><a href="/">Back to Asanib</a></header>
+    <article className="legal-document">
+      <div className="legal-heading"><span>LEGAL · UPDATED {updated.toUpperCase()}</span><h1>{page.title}</h1><p>{page.intro}</p><div className="operator-note">Asanib is operated by <strong>JS Ventures LLC</strong>.</div></div>
+      {page.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2>{block.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</section>)}
+      <div className="legal-disclaimer">These platform policies describe Asanib’s current operating model and are intended to be clear to users. They do not replace rights or obligations imposed by applicable law.</div>
+    </article>
+    <LegalFooter />
+  </main>
+}
