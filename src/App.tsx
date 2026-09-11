@@ -27,6 +27,13 @@ import { setProviderApproved, watchAdminAccess, watchAllProviders, watchAllReque
 import type { Booking, ParsedRequest, ProviderProfile, Quote, ServiceRequest, ServiceRequestDraft, Urgency } from './types'
 
 const serviceCategories = ['Home services', 'Send & errands', 'Auto services', 'Beauty', 'Local services']
+const categoryCards = [
+  { icon: '⌂', title: 'Home services', copy: 'Cleaning, AC, plumbing, electrical and handyman jobs.', prompt: 'I need a home service provider' },
+  { icon: '↗', title: 'Send & errands', copy: 'Couriers, pickups, deliveries, moving and everyday errands.', prompt: 'I need someone to collect and deliver something' },
+  { icon: '◉', title: 'Auto services', copy: 'Mobile car wash, battery, tyre and roadside help.', prompt: 'I need help with my car' },
+  { icon: '✦', title: 'Beauty', copy: 'Find mobile and local beauty professionals around you.', prompt: 'I need a beauty service near me' },
+  { icon: '＋', title: 'Local services', copy: 'For everything else: describe the job and let providers respond.', prompt: 'I need someone local who can help me with' },
+]
 
 const examples = [
   'AC technician in Al Barsha right now under AED 200',
@@ -78,7 +85,14 @@ function CustomerHome() {
     return () => { stopRequests(); stopBookings() }
   }, [user])
 
-  const canSubmit = useMemo(() => firebaseConfigured && queryText.trim().length >= 8 && location.trim().length >= 2 && (!scheduledFor || urgency === 'scheduled'), [queryText, location, urgency, scheduledFor])
+  const openCount = requests.filter((item) => item.status === 'open').length
+  const activeBookings = bookings.filter((item) => item.status === 'booked' || item.status === 'in_progress').length
+  const canSubmit = useMemo(() => firebaseConfigured && queryText.trim().length >= 8 && location.trim().length >= 2 && (urgency !== 'scheduled' || Boolean(scheduledFor)), [queryText, location, urgency, scheduledFor])
+
+  function jumpToRequest(prompt: string) {
+    setQueryText(prompt)
+    window.setTimeout(() => document.getElementById('request-box')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 20)
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -102,48 +116,81 @@ function CustomerHome() {
   }
 
   return (
-    <main className="page">
-      <header className="topbar">
+    <main className="page customer-home">
+      <header className="topbar home-topbar">
         <a className="brand" href="/">asanib<span>.</span></a>
-        <nav className="nav-actions"><a href="/provider">For providers</a><a href="/admin">Admin</a></nav>
+        <nav className="home-nav"><a href="#services">Services</a><a href="#how-it-works">How it works</a><a href="/provider">For providers</a></nav>
+        <a className="provider-pill" href="/provider">List your business</a>
       </header>
 
-      <section className="hero compact-hero">
-        <div className="eyebrow">REAL LOCAL HELP</div>
-        <h1>What do you need <em>done?</em></h1>
-        <p>Post one request. Relevant local providers can quote it. Choose the provider you want.</p>
+      <section className="hero production-hero">
+        <div className="hero-copy">
+          <div className="eyebrow">LOCAL HELP, WITHOUT THE PHONE-TAG</div>
+          <h1>Tell us what you need. <em>Let providers come to you.</em></h1>
+          <p className="hero-lead">Describe the job once, set your area and budget, then compare quotes from relevant local providers instead of calling businesses one by one.</p>
+          <div className="trust-row"><span>✓ No joining fee for customers</span><span>✓ Compare before choosing</span><span>✓ Pay the provider directly in V1</span></div>
+        </div>
 
         {!firebaseConfigured && <ErrorBox message="Firebase is not connected yet. Add the values from .env.example to .env.local before requests can be posted." />}
         {error && <ErrorBox message={error} />}
 
-        <form className="request-card" onSubmit={submit}>
+        <form id="request-box" className="request-card production-request" onSubmit={submit}>
+          <div className="request-card-heading"><div><span>Start a request</span><strong>What do you need done?</strong></div><div className="request-live"><i /> Providers respond with quotes</div></div>
           <label className="search-field">
             <span className="search-icon">⌕</span>
-            <textarea value={queryText} onChange={(e) => setQueryText(e.target.value)} placeholder="e.g. My AC stopped cooling. Need someone in Al Barsha now." rows={3} />
+            <textarea value={queryText} onChange={(e) => setQueryText(e.target.value)} placeholder="Describe the job in your own words — e.g. My AC stopped cooling. Need someone in Al Barsha now." rows={3} />
           </label>
           <div className="form-grid">
-            <label><span>Area</span><input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Al Barsha, Dubai" required /></label>
-            <label><span>Max budget</span><div className="money-input"><b>AED</b><input inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value.replace(/\D/g, ''))} placeholder="Optional" /></div></label>
+            <label><span>Where do you need help?</span><input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Al Barsha, Dubai" required /></label>
+            <label><span>Maximum budget</span><div className="money-input"><b>AED</b><input inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value.replace(/\D/g, ''))} placeholder="Optional" /></div></label>
           </div>
+          <div className="urgency-label">When do you need it?</div>
           <div className="urgency-row">
-            {(['now', 'today', 'scheduled'] as Urgency[]).map((value) => <button type="button" className={urgency === value ? 'chip active' : 'chip'} onClick={() => setUrgency(value)} key={value}>{value === 'now' ? '⚡ Need it now' : value === 'today' ? 'Today' : 'Schedule'}</button>)}
+            {(['now', 'today', 'scheduled'] as Urgency[]).map((value) => <button type="button" className={urgency === value ? 'chip active' : 'chip'} onClick={() => setUrgency(value)} key={value}>{value === 'now' ? '⚡ Need it now' : value === 'today' ? 'Today' : 'Choose a time'}</button>)}
           </div>
           {urgency === 'scheduled' && <div className="inline-field"><label>When?</label><input type="datetime-local" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} required /></div>}
-          <button className="primary" disabled={!canSubmit || saving}>{saving ? 'Posting request…' : 'Post request'}</button>
+          <button className="primary request-submit" disabled={!canSubmit || saving}>{saving ? 'Posting request…' : 'Find providers'}</button>
+          <p className="form-fineprint">Your request is only shared with authenticated provider accounts that can respond to jobs on Asanib.</p>
         </form>
 
-        <div className="example-strip"><span>Try:</span>{examples.map((example) => <button key={example} onClick={() => setQueryText(example)}>{example}</button>)}</div>
+        <div className="example-strip"><span>Popular requests:</span>{examples.map((example) => <button key={example} onClick={() => jumpToRequest(example)}>{example}</button>)}</div>
       </section>
 
-      {requests.length > 0 && <section className="dashboard-section">
-        <div className="section-heading"><h2>Your requests</h2><span>{requests.length}</span></div>
-        <div className="list-stack">{requests.slice(0, 8).map((request) => <a className="list-card" href={`/request/${request.id}`} key={request.id}><div><strong>{request.query}</strong><p>{request.location} · {request.category}</p></div><span className={`status ${request.status}`}>{request.status}</span></a>)}</div>
+      {(requests.length > 0 || bookings.length > 0) && <section className="account-snapshot">
+        <div className="snapshot-copy"><span className="eyebrow">YOUR ASANIB</span><h2>Pick up where you left off.</h2><p>Your active requests and booked jobs stay right here on this device.</p></div>
+        <div className="snapshot-stats"><div><strong>{openCount}</strong><span>Open requests</span></div><div><strong>{activeBookings}</strong><span>Active bookings</span></div><div><strong>{bookings.length}</strong><span>Total bookings</span></div></div>
       </section>}
 
-      {bookings.length > 0 && <section className="dashboard-section">
-        <div className="section-heading"><h2>Your bookings</h2><span>{bookings.length}</span></div>
-        <div className="list-stack">{bookings.map((booking) => <div className="list-card" key={booking.id}><div><strong>{booking.providerName}</strong><p>AED {booking.amount} · booking {booking.id.slice(0, 7)}</p></div><span className={`status ${booking.status}`}>{booking.status.replace('_', ' ')}</span></div>)}</div>
+      {requests.length > 0 && <section className="dashboard-section home-dashboard">
+        <div className="section-heading"><div><span className="section-kicker">LIVE REQUESTS</span><h2>Your requests</h2></div><span>{requests.length}</span></div>
+        <div className="list-stack">{requests.slice(0, 8).map((request) => <a className="list-card detailed-list-card" href={`/request/${request.id}`} key={request.id}><div><strong>{request.query}</strong><p>{request.location} · {request.category}{request.budget ? ` · up to AED ${request.budget}` : ''}</p></div><span className={`status ${request.status}`}>{request.status}</span></a>)}</div>
       </section>}
+
+      {bookings.length > 0 && <section className="dashboard-section home-dashboard">
+        <div className="section-heading"><div><span className="section-kicker">BOOKINGS</span><h2>Your booked providers</h2></div><span>{bookings.length}</span></div>
+        <div className="booking-grid">{bookings.map((booking) => <article className="customer-booking-card" key={booking.id}><div className="booking-card-top"><div><strong>{booking.providerName}</strong><p>AED {booking.amount} · booking {booking.id.slice(0, 7)}</p></div><span className={`status ${booking.status}`}>{booking.status.replace('_', ' ')}</span></div><div className="booking-actions">{booking.providerPhone && <a href={`tel:${booking.providerPhone}`}>Call provider</a>}{booking.providerWhatsapp && <a href={`https://wa.me/${booking.providerWhatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">WhatsApp</a>}<a href={`/request/${booking.requestId}`}>View request</a></div></article>)}</div>
+      </section>}
+
+      <section id="services" className="home-section services-section">
+        <div className="section-intro"><div><span className="eyebrow">START WITH THE JOB</span><h2>One place for everyday local help.</h2></div><p>You do not need to know the exact business category. Pick something close, or just describe what needs doing.</p></div>
+        <div className="service-card-grid">{categoryCards.map((category) => <button className="service-card" key={category.title} onClick={() => jumpToRequest(category.prompt)}><span className="service-icon">{category.icon}</span><strong>{category.title}</strong><p>{category.copy}</p><b>Start request →</b></button>)}</div>
+      </section>
+
+      <section id="how-it-works" className="home-section how-section">
+        <div className="section-intro"><div><span className="eyebrow">HOW ASANIB WORKS</span><h2>Less searching. More getting it done.</h2></div><p>Asanib is built around a request, not a directory. You tell us the outcome you need; suitable providers decide whether to quote.</p></div>
+        <div className="steps-grid"><article><span>01</span><h3>Describe the job</h3><p>Tell us what you need, where you need it, your timing and an optional maximum budget.</p></article><article><span>02</span><h3>Receive quotes</h3><p>Approved providers can respond with their price, ETA and what is included.</p></article><article><span>03</span><h3>Choose who fits</h3><p>Compare your options and accept the quote you want. Asanib creates the booking.</p></article><article><span>04</span><h3>Get it done</h3><p>Contact the accepted provider directly, follow booking progress and keep everything tied to the request.</p></article></div>
+      </section>
+
+      <section className="home-section confidence-section">
+        <div className="confidence-main"><span className="eyebrow">BUILT FOR REAL-WORLD SERVICES</span><h2>Useful first. Flashy second.</h2><p>Asanib is not a list of random businesses dressed up as an AI answer. Provider accounts require approval before they can quote. Customers choose the quote; providers choose the jobs they want.</p><div className="confidence-points"><span>Provider approval controls</span><span>Quote-first marketplace</span><span>Clear booking states</span><span>Direct provider contact after booking</span></div></div>
+        <aside className="need-now-card"><div className="pulse-dot" /><span>Need it now?</span><strong>Mark a request urgent.</strong><p>Providers who cover your category and service area can see the open job and respond with an ETA.</p><button onClick={() => { setUrgency('now'); jumpToRequest('I need someone who can help me right now with') }}>Post an urgent request</button></aside>
+      </section>
+
+      <section className="provider-cta">
+        <div><span className="eyebrow">FOR LOCAL BUSINESSES</span><h2>Stop chasing every lead. Quote the jobs that fit.</h2><p>Create your service profile, choose the categories and areas you cover, and respond only when a request makes sense for your business.</p></div><a href="/provider">Join as a provider →</a>
+      </section>
+
+      <footer className="home-footer"><a className="brand" href="/">asanib<span>.</span></a><p>Everyday local help, made easier.</p><nav><a href="/provider">Provider portal</a><a href="/admin">Admin</a><a href="#services">Services</a></nav></footer>
     </main>
   )
 }
@@ -189,7 +236,7 @@ function RequestPage({ requestId }: { requestId: string }) {
         {error && <ErrorBox message={error} />}
         {request.status === 'open' && <div className="quote-section"><div className="section-heading"><h2>Provider quotes</h2><span>{quotes.length}</span></div>{quotes.length === 0 ? <div className="empty-state"><strong>No quotes yet.</strong><p>Approved providers matching this job can see it and respond.</p></div> : <div className="quote-grid">{quotes.map((quote) => <article className="quote-card" key={quote.id}><div className="quote-top"><div><strong>{quote.providerName}</strong><p>{quote.etaMinutes ? `ETA ${quote.etaMinutes} min` : 'ETA not supplied'}</p></div><b>AED {quote.amount}</b></div>{quote.message && <p className="quote-message">{quote.message}</p>}<button className="primary" disabled={working === quote.id} onClick={() => choose(quote)}>{working === quote.id ? 'Booking…' : 'Accept quote'}</button></article>)}</div>}
           <button className="danger-link" disabled={working === 'cancel'} onClick={cancel}>{working === 'cancel' ? 'Cancelling…' : 'Cancel request'}</button></div>}
-        {request.status === 'booked' && <div className="success-panel"><strong>Booked.</strong><p>You accepted a provider quote. Payment is handled directly with the provider in this V1.</p></div>}
+        {request.status === 'booked' && <div className="success-panel"><strong>Booked.</strong><p>You accepted a provider quote. Payment is handled directly with the provider in this V1. Your provider contact details are shown on the homepage booking card.</p></div>}
         {request.status === 'cancelled' && <div className="empty-state"><strong>Request cancelled.</strong></div>}
       </>}
     </section>
