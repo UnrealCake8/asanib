@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "firebase": "^12.19.0",
+    "firebase-admin": "^14.1.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "workbox-precaching": "^7.3.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
