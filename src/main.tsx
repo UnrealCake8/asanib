@@ -13,6 +13,7 @@ import './ziina.css'
 import './mobile-refresh.css'
 import './provider-v3.css'
 import './request-detail-refresh.css'
+import './payouts.css'
 
 registerSW({ immediate: true })
 
