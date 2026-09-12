@@ -35,8 +35,10 @@ export interface ServiceRequest extends ParsedRequest {
   customerId: string
   status: RequestStatus
   acceptedQuoteId?: string
+  acceptedProviderId?: string
   locationData?: LocationData
   createdAt?: unknown
+  updatedAt?: unknown
 }
 
 export interface ProviderProfile {
