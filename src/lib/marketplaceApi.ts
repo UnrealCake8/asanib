@@ -81,10 +81,6 @@ export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Qu
   return result
 }
 
-export async function startZiinaConnect() {
-  return authenticatedPost<{ authorizationUrl: string }>('/api/ziina-connect-start', {})
-}
-
 export async function startAsanibCheckout(bookingId: string) {
   return authenticatedPost<{
     paymentIntentId: string
@@ -92,6 +88,7 @@ export async function startAsanibCheckout(bookingId: string) {
     status: string
     amountFils: number
     providerName: string
+    merchantName: string
   }>('/api/ziina-checkout', { bookingId })
 }
 
