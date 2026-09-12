@@ -75,7 +75,7 @@ export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Qu
       ...result,
       checkoutUrl: `/checkout/${result.bookingId}`,
       checkoutProvider: 'Asanib Checkout · Ziina',
-      checkoutHost: 'asanib',
+      checkoutHost: 'pay.ziina.com',
     }
   }
   return result
@@ -84,7 +84,7 @@ export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Qu
 export async function startAsanibCheckout(bookingId: string) {
   return authenticatedPost<{
     paymentIntentId: string
-    embeddedUrl: string
+    redirectUrl: string
     status: string
     amountFils: number
     providerName: string
