@@ -20,7 +20,7 @@ npm run dev
 
 ## Ziina Checkout
 
-Asanib Checkout uses Ziina OAuth so verified providers connect their own Ziina Business account. Payment intents are created using the provider-authorised Ziina token, and the payment form is shown inside Asanib using Ziina's `embedded_url`. The underlying service payment is received by the connected provider's Ziina wallet rather than held by JS Ventures LLC.
+Asanib Checkout uses Ziina OAuth so verified providers connect their own Ziina Business account. Payment intents are created using the provider-authorised Ziina token, and the payment form is shown inside Asanib using Ziina's `embedded_url`. The underlying service payment is received by the connected provider's Ziina Business account rather than held by JS Ventures LLC.
 
 Ziina OAuth access is reviewed case-by-case. Before production use, ask Ziina to approve the Asanib application, redirect URI and requested scopes. Configure the server-only environment variables shown in `.env.example`, register the webhook URL, and complete Ziina's embedded-checkout domain approval and Apple Pay domain-verification requirement.
 
