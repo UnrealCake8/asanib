@@ -4,6 +4,7 @@ export type QuoteStatus = 'pending' | 'accepted' | 'withdrawn'
 export type BookingStatus = 'booked' | 'in_progress' | 'completed' | 'cancelled'
 export type KybStatus = 'not_started' | 'pending' | 'verified' | 'rejected'
 export type PaymentLinkStatus = 'none' | 'pending_review' | 'approved' | 'rejected'
+export type KybDocumentType = 'trade_license' | 'emirates_id_front' | 'emirates_id_back'
 
 export interface LocationData {
   label: string
@@ -36,6 +37,7 @@ export interface ServiceRequest extends ParsedRequest {
   status: RequestStatus
   acceptedQuoteId?: string
   acceptedProviderId?: string
+  closedReason?: string
   locationData?: LocationData
   createdAt?: unknown
   updatedAt?: unknown
@@ -58,6 +60,8 @@ export interface ProviderProfile {
   representativeName?: string | null
   representativeConfirmed?: boolean
   tradeLicensePath?: string | null
+  emiratesIdFrontPath?: string | null
+  emiratesIdBackPath?: string | null
   kybStatus?: KybStatus
   kybReviewNote?: string | null
   checkoutUrl?: string | null
@@ -84,6 +88,7 @@ export interface Quote {
   etaMinutes?: number
   message?: string
   status: QuoteStatus
+  withdrawnReason?: string
   checkoutUrl?: string | null
   checkoutProvider?: string | null
   checkoutHost?: string | null
