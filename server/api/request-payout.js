@@ -75,8 +75,11 @@ export default async function handler(req, res) {
     const bookingIds = []
 
     await adminDb.runTransaction(async (tx) => {
-      for (const docSnap of eligibleRefs) {
-        const fresh = await tx.get(docSnap.ref)
+      const freshBookings = []
+      for (const docSnap of eligibleRefs) freshBookings.push(await tx.get(docSnap.ref))
+
+      const reservable = []
+      for (const fresh of freshBookings) {
         if (!fresh.exists) continue
         const booking = fresh.data()
         if (booking.providerId !== user.uid || booking.paymentStatus !== 'paid' || booking.status !== 'completed' || booking.payoutId || booking.payoutState === 'pending' || booking.payoutState === 'paid') continue
@@ -84,9 +87,14 @@ export default async function handler(req, res) {
         if (fils <= 0) continue
         amountFils += fils
         bookingIds.push(fresh.id)
+        reservable.push(fresh)
+      }
+
+      if (!bookingIds.length || amountFils <= 0) throw Object.assign(new Error('Your available balance changed. Refresh and try again.'), { statusCode: 409 })
+
+      for (const fresh of reservable) {
         tx.set(fresh.ref, { payoutId: payoutRef.id, payoutState: 'pending', payoutReservedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
       }
-      if (!bookingIds.length || amountFils <= 0) throw Object.assign(new Error('Your available balance changed. Refresh and try again.'), { statusCode: 409 })
       tx.set(payoutRef, {
         providerId: user.uid,
         providerName: provider.businessName || null,
