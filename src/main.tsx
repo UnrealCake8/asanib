@@ -8,6 +8,7 @@ import './styles.css'
 import './functional.css'
 import './customer.css'
 import './product.css'
+import './v2.css'
 
 registerSW({ immediate: true })
 
