@@ -30,6 +30,14 @@ export default async function handler(req, res) {
       .get()
     if (!duplicate.empty) return res.status(409).json({ error: 'You already sent a quote for this request.' })
 
+    const approvedCheckout = provider.paymentLinkStatus === 'approved' && provider.checkoutUrl
+      ? {
+          checkoutUrl: String(provider.checkoutUrl),
+          checkoutProvider: provider.checkoutProvider ? String(provider.checkoutProvider) : null,
+          checkoutHost: provider.checkoutHost ? String(provider.checkoutHost) : new URL(String(provider.checkoutUrl)).hostname,
+        }
+      : { checkoutUrl: null, checkoutProvider: null, checkoutHost: null }
+
     const quoteRef = adminDb.collection('quotes').doc()
     await quoteRef.set({
       requestId,
@@ -40,6 +48,7 @@ export default async function handler(req, res) {
       amount,
       etaMinutes,
       message,
+      ...approvedCheckout,
       status: 'pending',
       createdAt: FieldValue.serverTimestamp(),
     })
