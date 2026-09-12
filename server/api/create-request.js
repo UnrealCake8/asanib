@@ -8,6 +8,19 @@ function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max)
 }
 
+function inferCategory(query, fallback) {
+  const q = String(query || '').toLowerCase()
+
+  // Specific intents first. In particular, never treat the "ac" inside words such as
+  // "package" as an air-conditioning request.
+  if (/\b(package|parcel|deliver(?:y|ed|ing)?|courier|pickup|pick-up|dropoff|drop-off|errand|move|moving)\b/.test(q)) return 'Send & errands'
+  if (/\b(car|vehicle|tyre|tire|battery|carwash|wash)\b/.test(q)) return 'Auto services'
+  if (/\b(salon|beauty|hair|nail|makeup|barber)\b/.test(q)) return 'Beauty'
+  if (/\b(clean(?:er|ing)?|plumb(?:er|ing)?|electric(?:ian|al)?|handyman|air\s*condition(?:er|ing)?|a\/c|ac)\b/.test(q)) return 'Home services'
+
+  return cleanText(fallback, 80) || 'Local services'
+}
+
 function matchesProvider(provider, request, locationData) {
   if (!provider.approved) return false
   if (request.urgency === 'now' && !provider.availableNow) return false
@@ -21,14 +34,17 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res)
   try {
     const user = await requireUser(req)
+    const query = cleanText(req.body?.query, 700)
+    const category = inferCategory(query, req.body?.category)
+    const location = cleanText(req.body?.location, 160)
     const request = {
-      query: cleanText(req.body?.query, 700),
-      location: cleanText(req.body?.location, 160),
+      query,
+      location,
       budget: req.body?.budget == null ? null : Number(req.body.budget),
       urgency: cleanText(req.body?.urgency, 20),
       scheduledFor: req.body?.scheduledFor ? cleanText(req.body.scheduledFor, 80) : null,
-      category: cleanText(req.body?.category, 80),
-      summary: cleanText(req.body?.summary, 240),
+      category,
+      summary: `${category}${location ? ` near ${location}` : ''}`.slice(0, 240),
     }
     if (request.query.length < 8 || request.location.length < 2 || !request.category) return res.status(400).json({ error: 'Describe the job, area and service category.' })
     if (!['now', 'today', 'scheduled'].includes(request.urgency)) return res.status(400).json({ error: 'Invalid urgency.' })
