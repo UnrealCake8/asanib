@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
+import { providerCoversLocation, resolveUaeLocation } from './_locations.js'
 import { notifyUser } from './_notify.js'
 import { sendProviderRequestAlert } from './_whatsapp.js'
 
@@ -7,15 +8,13 @@ function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max)
 }
 
-function matchesProvider(provider, request) {
+function matchesProvider(provider, request, locationData) {
   if (!provider.approved) return false
   if (request.urgency === 'now' && !provider.availableNow) return false
   const categories = Array.isArray(provider.categories) ? provider.categories.map((item) => String(item).toLowerCase()) : []
   const category = request.category.toLowerCase()
   if (!categories.includes(category) && !categories.includes('local services')) return false
-  const areas = Array.isArray(provider.areas) ? provider.areas.map((item) => String(item).toLowerCase().trim()).filter(Boolean) : []
-  const location = request.location.toLowerCase()
-  return areas.length === 0 || areas.some((area) => location.includes(area) || area.includes(location))
+  return providerCoversLocation(provider.areas, request.location, locationData)
 }
 
 export default async function handler(req, res) {
@@ -36,16 +35,18 @@ export default async function handler(req, res) {
     if (request.urgency === 'scheduled' && !request.scheduledFor) return res.status(400).json({ error: 'Choose a scheduled time.' })
     if (request.budget != null && (!Number.isFinite(request.budget) || request.budget <= 0 || request.budget > 1000000)) return res.status(400).json({ error: 'Invalid budget.' })
 
+    const locationData = await resolveUaeLocation(request.location)
     const providersSnapshot = await adminDb.collection('providers').where('approved', '==', true).get()
     const providers = providersSnapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((provider) => matchesProvider(provider, request))
+      .filter((provider) => matchesProvider(provider, request, locationData))
       .slice(0, 100)
 
     const requestRef = adminDb.collection('requests').doc()
     const batch = adminDb.batch()
     batch.set(requestRef, {
       ...request,
+      locationData,
       customerId: user.uid,
       status: 'open',
       matchCount: providers.length,
@@ -58,6 +59,7 @@ export default async function handler(req, res) {
         requestId: requestRef.id,
         customerId: user.uid,
         ...request,
+        locationData,
         status: 'open',
         matchedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
@@ -75,7 +77,7 @@ export default async function handler(req, res) {
       sendProviderRequestAlert(provider, request, requestRef.id),
     ]))
 
-    return res.status(201).json({ id: requestRef.id, matchCount: providers.length })
+    return res.status(201).json({ id: requestRef.id, matchCount: providers.length, location: locationData })
   } catch (error) {
     return sendError(res, error)
   }

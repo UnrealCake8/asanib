@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
 import { notifyUser } from './_notify.js'
+import { ziinaConfigured } from './_ziina.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res)
@@ -30,10 +31,20 @@ export default async function handler(req, res) {
         providerWhatsapp: quote.providerWhatsapp || null,
         quoteId,
         amount: quote.amount,
+        checkoutUrl: quote.checkoutUrl || null,
+        checkoutProvider: quote.checkoutProvider || null,
+        checkoutHost: quote.checkoutHost || null,
+        paymentStatus: 'not_started',
         status: 'booked',
         createdAt: FieldValue.serverTimestamp(),
       })
-      return { providerId: quote.providerId, providerName: quote.providerName }
+      return {
+        providerId: quote.providerId,
+        providerName: quote.providerName,
+        checkoutUrl: quote.checkoutUrl || null,
+        checkoutProvider: quote.checkoutProvider || null,
+        checkoutHost: quote.checkoutHost || null,
+      }
     })
 
     const otherQuotes = await adminDb.collection('quotes').where('requestId', '==', requestId).get()
@@ -43,8 +54,10 @@ export default async function handler(req, res) {
     })
     await batch.commit()
 
+    const asanibCheckoutAvailable = ziinaConfigured()
+
     await notifyUser(outcome.providerId, 'Your Asanib quote was accepted', 'The customer booked your quote. Open Asanib to view the job.', '/provider')
-    return res.status(200).json({ bookingId: bookingRef.id })
+    return res.status(200).json({ bookingId: bookingRef.id, asanibCheckoutAvailable, ...outcome })
   } catch (error) {
     return sendError(res, error)
   }

@@ -1,43 +1,6 @@
 # Asanib
 
-Asanib is a mobile-first local-services marketplace. Customers post a real service request, approved providers see matching jobs and send quotes, and the customer can accept a quote to create a booking.
-
-## What works in V1
-
-- Anonymous customer sessions through Firebase Auth
-- Real Firestore-backed service requests
-- Location, budget, urgency and scheduled requests
-- Persistent `/request/:id` request pages
-- Live provider quotes on customer requests
-- Email/password provider accounts
-- Provider onboarding with service categories and coverage areas
-- Admin approval before a provider can quote
-- Provider availability toggle
-- Provider-side request matching
-- Quotes with amount, ETA and message
-- Customer quote acceptance
-- Booking creation and provider job-status updates
-- Customer request and booking history
-- Admin provider approval and request monitoring
-- Installable PWA
-
-Payments are intentionally outside V1. The accepted quote creates a booking and the customer pays the provider directly.
-
-## Firebase setup
-
-1. Create a Firebase project and Web App.
-2. Enable **Authentication → Anonymous**.
-3. Enable **Authentication → Email/Password**.
-4. Create a Firestore database.
-5. Copy `.env.example` to `.env.local` and add the Firebase Web App values.
-6. Deploy `firestore.rules` and `firestore.indexes.json`.
-7. For the first admin, create `admins/<ADMIN_UID>` in Firestore. The document can contain any small marker such as `{ "active": true }`.
-
-Example Firebase CLI deployment:
-
-```bash
-firebase deploy --only firestore:rules,firestore:indexes
-```
+Asanib is a UAE local-services marketplace operated by JS Ventures LLC. Customers describe the job they need, Asanib matches relevant verified providers, providers send quotes, and customers choose who fits.
 
 ## Local development
 
@@ -47,15 +10,22 @@ cp .env.example .env.local
 npm run dev
 ```
 
-## Build
+## Core services
 
-```bash
-npm run build
-```
+- Firebase Authentication and Firestore
+- Cloudflare R2 for private KYB document storage
+- Google Maps Platform for structured UAE place selection and matching
+- Ziina for provider-connected embedded Asanib Checkout
+- Vercel for the web app and API routes
 
-## Main routes
+## Ziina Checkout
 
-- `/` customer app
-- `/request/:id` live request and quotes
-- `/provider` provider sign-in, onboarding and dashboard
-- `/admin` provider approvals and operations
+Asanib Checkout uses Ziina OAuth so verified providers connect their own Ziina Business account. Payment intents are created using the provider-authorised Ziina token, and the payment form is shown inside Asanib using Ziina's `embedded_url`. The underlying service payment is received by the connected provider's Ziina Business account rather than held by JS Ventures LLC.
+
+Ziina OAuth access is reviewed case-by-case. Before production use, ask Ziina to approve the Asanib application, redirect URI and requested scopes. Configure the server-only environment variables shown in `.env.example`, register the webhook URL, and complete Ziina's embedded-checkout domain approval and Apple Pay domain-verification requirement.
+
+Keep `ZIINA_TEST_MODE=true` until the full flow has been tested and Ziina has approved production use.
+
+## Security notes
+
+Never commit real Firebase Admin, R2, Google Maps server, Ziina OAuth, or webhook credentials. Provider Ziina tokens are stored only in server-side Firestore collections that have no client rule allowing access.

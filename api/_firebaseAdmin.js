@@ -24,6 +24,13 @@ export async function requireUser(req) {
   return adminAuth.verifyIdToken(token)
 }
 
+export async function requireAdmin(req) {
+  const user = await requireUser(req)
+  const admin = await adminDb.collection('admins').doc(user.uid).get()
+  if (!admin.exists) throw Object.assign(new Error('Admin access required.'), { statusCode: 403 })
+  return user
+}
+
 export function sendError(res, error) {
   const status = Number(error?.statusCode || 500)
   res.status(status).json({ error: error instanceof Error ? error.message : 'Server error.' })

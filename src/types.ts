@@ -2,6 +2,20 @@ export type Urgency = 'now' | 'today' | 'scheduled'
 export type RequestStatus = 'open' | 'booked' | 'cancelled' | 'completed'
 export type QuoteStatus = 'pending' | 'accepted' | 'withdrawn'
 export type BookingStatus = 'booked' | 'in_progress' | 'completed' | 'cancelled'
+export type KybStatus = 'not_started' | 'pending' | 'verified' | 'rejected'
+export type PaymentLinkStatus = 'none' | 'pending_review' | 'approved' | 'rejected'
+
+export interface LocationData {
+  label: string
+  placeId?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  area?: string | null
+  city?: string | null
+  emirate?: string | null
+  countryCode?: string | null
+  source?: 'google' | 'text' | string
+}
 
 export interface ServiceRequestDraft {
   query: string
@@ -21,6 +35,7 @@ export interface ServiceRequest extends ParsedRequest {
   customerId: string
   status: RequestStatus
   acceptedQuoteId?: string
+  locationData?: LocationData
   createdAt?: unknown
 }
 
@@ -34,6 +49,24 @@ export interface ProviderProfile {
   areas: string[]
   availableNow: boolean
   approved: boolean
+  legalBusinessName?: string | null
+  tradeLicenseNumber?: string | null
+  licensingAuthority?: string | null
+  licenseExpiry?: string | null
+  representativeName?: string | null
+  representativeConfirmed?: boolean
+  tradeLicensePath?: string | null
+  kybStatus?: KybStatus
+  kybReviewNote?: string | null
+  checkoutUrl?: string | null
+  checkoutProvider?: string | null
+  checkoutHost?: string | null
+  paymentLinkStatus?: PaymentLinkStatus
+  paymentLinkReviewNote?: string | null
+  ziinaConnected?: boolean
+  ziinaAccountStatus?: string | null
+  ziinaDisplayName?: string | null
+  ziinaZiiname?: string | null
   createdAt?: unknown
   updatedAt?: unknown
 }
@@ -49,6 +82,9 @@ export interface Quote {
   etaMinutes?: number
   message?: string
   status: QuoteStatus
+  checkoutUrl?: string | null
+  checkoutProvider?: string | null
+  checkoutHost?: string | null
   createdAt?: unknown
 }
 
@@ -63,6 +99,14 @@ export interface Booking {
   quoteId: string
   amount: number
   status: BookingStatus
+  checkoutUrl?: string | null
+  checkoutProvider?: string | null
+  checkoutHost?: string | null
+  paymentProcessor?: string | null
+  paymentStatus?: string | null
+  paymentAmountFils?: number | null
+  ziinaPaymentIntentId?: string | null
+  paidAt?: unknown
   createdAt?: unknown
 }
 
