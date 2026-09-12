@@ -1,6 +1,7 @@
+import { randomUUID } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
-import { getProviderZiinaToken, ziinaApi } from './_ziina.js'
+import { ziinaApi } from './_ziina.js'
 
 function originFromReq(req) {
   const proto = String(req.headers['x-forwarded-proto'] || 'https')
@@ -35,13 +36,14 @@ export default async function handler(req, res) {
           status: existingPayment.data()?.status || 'requires_payment_instrument',
           amountFils,
           providerName: booking.providerName,
+          merchantName: 'JS Ventures LLC',
         })
       }
     }
 
-    const token = await getProviderZiinaToken(String(booking.providerId))
     const origin = originFromReq(req)
-    const payment = await ziinaApi('/payment_intent', token, {
+    const operationId = randomUUID()
+    const payment = await ziinaApi('/payment_intent', {
       method: 'POST',
       body: JSON.stringify({
         amount: amountFils,
@@ -52,6 +54,7 @@ export default async function handler(req, res) {
         failure_url: `${origin}/checkout/${bookingId}?payment=failed&id={PAYMENT_INTENT_ID}`,
         test: process.env.ZIINA_TEST_MODE === 'true',
         allow_tips: false,
+        operation_id: operationId,
       }),
     })
 
@@ -64,10 +67,11 @@ export default async function handler(req, res) {
         customerId: user.uid,
         providerId: booking.providerId,
         providerName: booking.providerName,
+        merchantOfRecord: 'JS Ventures LLC',
         amountFils,
         currency: 'AED',
         status: payment.status || 'requires_payment_instrument',
-        ziinaOperationId: payment.operation_id || null,
+        operationId,
         embeddedUrl: payment.embedded_url,
         accountId: payment.account_id || null,
         test: process.env.ZIINA_TEST_MODE === 'true',
@@ -77,6 +81,7 @@ export default async function handler(req, res) {
       tx.set(bookingRef, {
         ziinaPaymentIntentId: String(payment.id),
         paymentProcessor: 'ziina',
+        paymentRecipient: 'JS Ventures LLC',
         paymentStatus: payment.status || 'requires_payment_instrument',
         paymentAmountFils: amountFils,
         updatedAt: FieldValue.serverTimestamp(),
@@ -89,6 +94,7 @@ export default async function handler(req, res) {
       status: payment.status || 'requires_payment_instrument',
       amountFils,
       providerName: booking.providerName,
+      merchantName: 'JS Ventures LLC',
     })
   } catch (error) {
     return sendError(res, error)
