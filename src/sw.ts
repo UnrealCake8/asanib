@@ -8,6 +8,10 @@ declare let self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<unknown> }
 
 precacheAndRoute(self.__WB_MANIFEST as never[])
 cleanupOutdatedCaches()
+self.skipWaiting()
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim())
+})
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
