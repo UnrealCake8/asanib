@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       if (requestSnap.data().status !== 'open') throw Object.assign(new Error('This request is no longer open.'), { statusCode: 409 })
       if (!quoteSnap.exists || quoteSnap.data().requestId !== requestId || quoteSnap.data().status !== 'pending') throw Object.assign(new Error('This quote is no longer available.'), { statusCode: 409 })
       const quote = quoteSnap.data()
-      tx.update(requestRef, { status: 'booked', acceptedQuoteId: quoteId, bookedAt: FieldValue.serverTimestamp() })
+      tx.update(requestRef, { status: 'booked', acceptedQuoteId: quoteId, acceptedProviderId: quote.providerId, bookedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() })
       tx.update(quoteRef, { status: 'accepted', acceptedAt: FieldValue.serverTimestamp() })
       tx.set(bookingRef, {
         requestId,
@@ -47,12 +47,21 @@ export default async function handler(req, res) {
       }
     })
 
-    const otherQuotes = await adminDb.collection('quotes').where('requestId', '==', requestId).get()
+    const [otherQuotes, matches] = await Promise.all([
+      adminDb.collection('quotes').where('requestId', '==', requestId).get(),
+      adminDb.collectionGroup('requests').where('requestId', '==', requestId).get(),
+    ])
     const batch = adminDb.batch()
     otherQuotes.docs.forEach((doc) => {
       if (doc.id !== quoteId && doc.data().status === 'pending') batch.update(doc.ref, { status: 'withdrawn', withdrawnAt: FieldValue.serverTimestamp() })
     })
-    await batch.commit()
+    matches.docs.forEach((doc) => batch.update(doc.ref, {
+      status: 'booked',
+      acceptedProviderId: outcome.providerId,
+      acceptedQuoteId: quoteId,
+      updatedAt: FieldValue.serverTimestamp(),
+    }))
+    if (!otherQuotes.empty || !matches.empty) await batch.commit()
 
     const asanibCheckoutAvailable = ziinaConfigured()
 
