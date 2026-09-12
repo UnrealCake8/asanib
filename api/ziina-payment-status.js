@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
-import { getProviderZiinaToken, ziinaApi } from './_ziina.js'
+import { ziinaApi } from './_ziina.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res)
@@ -16,8 +16,7 @@ export default async function handler(req, res) {
     const paymentIntentId = String(booking.ziinaPaymentIntentId || '')
     if (!paymentIntentId) return res.status(200).json({ status: booking.paymentStatus || 'not_started' })
 
-    const token = await getProviderZiinaToken(String(booking.providerId))
-    const payment = await ziinaApi(`/payment_intent/${encodeURIComponent(paymentIntentId)}`, token, { method: 'GET' })
+    const payment = await ziinaApi(`/payment_intent/${encodeURIComponent(paymentIntentId)}`, { method: 'GET' })
     const status = String(payment.status || 'unknown')
     const paid = status === 'completed'
 
