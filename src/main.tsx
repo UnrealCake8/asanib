@@ -15,6 +15,7 @@ import './provider-v3.css'
 import './request-detail-refresh.css'
 import './payouts.css'
 import './customer-request-first.css'
+import './customer-mobile-fix.css'
 
 registerSW({ immediate: true })
 
