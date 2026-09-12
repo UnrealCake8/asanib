@@ -12,6 +12,7 @@ import './v2.css'
 import './ziina.css'
 import './mobile-refresh.css'
 import './provider-v3.css'
+import './request-detail-refresh.css'
 
 registerSW({ immediate: true })
 
