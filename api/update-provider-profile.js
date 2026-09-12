@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
+import { r2ObjectExists } from './_r2.js'
 
 function clean(value, max = 240) {
   return String(value || '').trim().slice(0, max)
@@ -49,8 +50,19 @@ export default async function handler(req, res) {
     const licensingAuthority = clean(req.body?.licensingAuthority, 140) || null
     const licenseExpiry = clean(req.body?.licenseExpiry, 30) || null
     const representativeName = clean(req.body?.representativeName, 160) || null
-    const tradeLicensePath = clean(req.body?.tradeLicensePath, 500) || existing?.tradeLicensePath || null
+    const submittedTradeLicensePath = clean(req.body?.tradeLicensePath, 500) || null
+    let tradeLicensePath = submittedTradeLicensePath || existing?.tradeLicensePath || null
     const representativeConfirmed = req.body?.representativeConfirmed === true
+
+    if (submittedTradeLicensePath) {
+      if (!submittedTradeLicensePath.startsWith(`kyb/${user.uid}/`)) {
+        return res.status(400).json({ error: 'Invalid trade licence document.' })
+      }
+      if (!await r2ObjectExists(submittedTradeLicensePath)) {
+        return res.status(400).json({ error: 'Trade licence upload could not be verified.' })
+      }
+      tradeLicensePath = submittedTradeLicensePath
+    }
 
     const checkoutUrl = safeCheckoutUrl(req.body?.checkoutUrl)
     const checkoutProvider = clean(req.body?.checkoutProvider, 80) || null
