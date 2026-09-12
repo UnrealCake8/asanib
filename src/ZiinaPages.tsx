@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { User } from 'firebase/auth'
 import { watchAuth } from './lib/data'
 import { getAsanibCheckoutStatus, startAsanibCheckout } from './lib/marketplaceApi'
@@ -14,48 +14,36 @@ export function ZiinaCheckoutPage({ bookingId }: { bookingId: string }) {
   const { user, ready } = useUser()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [embeddedUrl, setEmbeddedUrl] = useState('')
-  const [providerName, setProviderName] = useState('Provider')
-  const [merchantName, setMerchantName] = useState('JS Ventures LLC')
-  const [amountFils, setAmountFils] = useState(0)
   const [status, setStatus] = useState('not_started')
-  const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
   async function begin() {
     setBusy(true); setError('')
     try {
       const result = await startAsanibCheckout(bookingId)
-      setEmbeddedUrl(`${result.embeddedUrl}${result.embeddedUrl.includes('?') ? '&' : '?'}version=v1`)
-      setProviderName(result.providerName || 'Provider')
-      setMerchantName(result.merchantName || 'JS Ventures LLC')
-      setAmountFils(result.amountFils || 0)
-      setStatus(result.status || 'requires_payment_instrument')
+      if (!result.redirectUrl || !result.redirectUrl.startsWith('https://pay.ziina.com/')) throw new Error('Ziina did not return a valid hosted checkout URL.')
+      window.location.assign(result.redirectUrl)
+      return
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start Asanib Checkout.')
+      setError(err instanceof Error ? err.message : 'Could not start Ziina Checkout.')
     }
     setBusy(false)
   }
 
   useEffect(() => {
-    if (ready && user && !user.isAnonymous && !embeddedUrl && !busy && status === 'not_started') void begin()
-  }, [ready, user])
-
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== 'https://pay.ziina.com') return
-      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return
-      const payload = event.data || {}
-      if (payload.type !== 'ZIINA_PAYMENT_STATUS_CHANGE') return
-      const next = String(payload.data?.status || '').toLowerCase()
-      if (next === 'completed') setStatus('checking')
-      else if (next === 'failed' || next === 'canceled') setStatus(next)
-      if (next === 'completed') {
-        void getAsanibCheckoutStatus(bookingId).then((result) => setStatus(result.status)).catch(() => setStatus('checking'))
-      }
+    if (!ready || !user || user.isAnonymous) return
+    const params = new URLSearchParams(window.location.search)
+    const payment = params.get('payment')
+    if (payment === 'success') {
+      setStatus('checking')
+      void getAsanibCheckoutStatus(bookingId).then((result) => setStatus(result.status)).catch(() => setStatus('checking'))
+      return
     }
-    window.addEventListener('message', onMessage)
-    return () => window.removeEventListener('message', onMessage)
-  }, [bookingId])
+    if (payment === 'cancelled' || payment === 'failed') {
+      setStatus(payment === 'cancelled' ? 'canceled' : 'failed')
+      return
+    }
+    if (status === 'not_started' && !busy) void begin()
+  }, [ready, user])
 
   useEffect(() => {
     if (status !== 'checking' && status !== 'pending' && status !== 'requires_user_action') return
@@ -71,10 +59,9 @@ export function ZiinaCheckoutPage({ bookingId }: { bookingId: string }) {
   if (!ready) return <main className="ziina-page"><div className="ziina-card">Loading…</div></main>
   if (!user) return <main className="ziina-page"><div className="ziina-card"><h1>Sign in required</h1><p>Open this booking from the same Asanib customer account that created it.</p><a className="primary ziina-link-button" href="/">Go to Asanib</a></div></main>
 
-  if (status === 'paid') return <main className="ziina-page"><section className="ziina-card checkout-complete"><span className="checkout-success-mark">✓</span><span className="eyebrow">PAYMENT CONFIRMED</span><h1>Paid securely with Ziina</h1><p>AED {(amountFils / 100).toFixed(2)} was paid through Asanib Checkout to {merchantName} for your booking with {providerName}.</p><a className="primary ziina-link-button" href="/">Back to bookings</a></section></main>
+  if (status === 'paid') return <main className="ziina-page"><section className="ziina-card checkout-complete"><span className="checkout-success-mark">✓</span><span className="eyebrow">PAYMENT CONFIRMED</span><h1>Paid securely with Ziina</h1><p>Your payment through Asanib Checkout to JS Ventures LLC has been confirmed for this booking.</p><a className="primary ziina-link-button" href="/">Back to bookings</a></section></main>
 
-  return <main className="ziina-page"><section className="ziina-card checkout-shell"><div className="ziina-card-head"><a className="brand" href="/">asanib<span>.</span></a><a href="/">Close</a></div><span className="eyebrow">ASANIB CHECKOUT · POWERED BY ZIINA</span><h1>Pay for your booking with {providerName}</h1>{amountFils > 0 && <p className="checkout-amount">AED {(amountFils / 100).toFixed(2)}</p>}<p className="integration-note">Asanib Checkout is processed through the Ziina Business account of <strong>{merchantName}</strong>, the operator of Asanib.</p>{error && <div className="notice error">{error}</div>}{(status === 'failed' || status === 'canceled') && <div className="notice error">Payment {status}. You can try again.</div>}
-    {embeddedUrl ? <iframe ref={iframeRef} id="ziina-checkout" className="ziina-checkout-frame" src={embeddedUrl} title="Ziina secure checkout" allow="payment" /> : <div className="checkout-loading">{busy ? 'Preparing secure checkout…' : <button className="primary" onClick={() => void begin()}>Try again</button>}</div>}
-    <p className="integration-note">The payment form is securely provided by Ziina. Card details are entered into Ziina’s checkout and are not handled by Asanib.</p>
+  return <main className="ziina-page"><section className="ziina-card checkout-shell"><div className="ziina-card-head"><a className="brand" href="/">asanib<span>.</span></a><a href="/">Close</a></div><span className="eyebrow">ASANIB CHECKOUT · POWERED BY ZIINA</span><h1>{status === 'checking' ? 'Confirming your payment…' : 'Continue to secure payment'}</h1><p className="integration-note">You’ll be redirected to <strong>pay.ziina.com</strong> to complete payment securely. After payment, Ziina will return you to Asanib.</p>{error && <div className="notice error">{error}</div>}{(status === 'failed' || status === 'canceled') && <div className="notice error">Payment {status}. You can try again.</div>}
+    {status === 'checking' ? <div className="checkout-loading">Checking payment status…</div> : <div className="checkout-loading">{busy ? 'Opening Ziina…' : <button className="primary" onClick={() => void begin()}>Pay securely with Ziina</button>}</div>}
   </section></main>
 }
