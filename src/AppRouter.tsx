@@ -1,5 +1,5 @@
 import CustomerAppV2 from './CustomerAppV2'
-import ProviderHubV2 from './ProviderHubV2'
+import ProviderHubV3 from './ProviderHubV3'
 import AdminV2 from './AdminV2'
 import LegalPage from './LegalPages'
 import { ZiinaCheckoutPage } from './ZiinaPages'
@@ -13,7 +13,7 @@ export default function AppRouter() {
   const checkoutMatch = path.match(/^\/checkout\/([^/]+)$/)
 
   if (checkoutMatch) return <ZiinaCheckoutPage bookingId={checkoutMatch[1]} />
-  if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHubV2 />
+  if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHubV3 />
   if (path === '/admin' || path.startsWith('/admin/')) return <AdminV2 />
   if (path === '/privacy') return <LegalPage kind="privacy" />
   if (path === '/terms') return <LegalPage kind="terms" />

@@ -16,8 +16,8 @@ export default async function handler(req, res) {
     const provider = snap.data()
 
     if (action === 'verify_kyb') {
-      const complete = provider.legalBusinessName && provider.tradeLicenseNumber && provider.licensingAuthority && provider.licenseExpiry && provider.representativeName && provider.representativeConfirmed && provider.tradeLicensePath
-      if (!complete) return res.status(409).json({ error: 'The provider has not completed all KYB fields.' })
+      const complete = provider.legalBusinessName && provider.tradeLicenseNumber && provider.licensingAuthority && provider.licenseExpiry && provider.representativeName && provider.representativeConfirmed && provider.tradeLicensePath && provider.emiratesIdFrontPath && provider.emiratesIdBackPath
+      if (!complete) return res.status(409).json({ error: 'The provider has not completed all KYB fields and identity documents.' })
       await ref.update({
         kybStatus: 'verified',
         approved: true,

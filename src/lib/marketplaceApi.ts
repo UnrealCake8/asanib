@@ -1,5 +1,5 @@
 import { auth } from './firebase'
-import type { ProviderProfile, Quote, ServiceRequest } from '../types'
+import type { KybDocumentType, ProviderProfile, Quote, ServiceRequest } from '../types'
 
 async function authenticatedPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const user = auth?.currentUser
@@ -31,22 +31,25 @@ export async function saveProviderBusiness(input: {
   representativeName?: string
   representativeConfirmed?: boolean
   tradeLicensePath?: string | null
+  emiratesIdFrontPath?: string | null
+  emiratesIdBackPath?: string | null
   checkoutUrl?: string
   checkoutProvider?: string
 }) {
   return authenticatedPost<{ ok: true; kybStatus: string; approved: boolean; paymentLinkStatus: string }>('/api/update-provider-profile', input)
 }
 
-export async function uploadTradeLicense(file: File): Promise<string> {
+export async function uploadKybDocument(file: File, documentType: KybDocumentType): Promise<string> {
   const user = auth?.currentUser
   if (!user) throw new Error('Provider sign-in required.')
   const allowedTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
-  if (!allowedTypes.has(file.type)) throw new Error('Upload a PDF, JPG, PNG or WebP trade licence.')
-  if (file.size > 10 * 1024 * 1024) throw new Error('Trade licence files must be smaller than 10 MB.')
+  if (!allowedTypes.has(file.type)) throw new Error('Upload a PDF, JPG, PNG or WebP verification document.')
+  if (file.size > 10 * 1024 * 1024) throw new Error('Verification documents must be smaller than 10 MB.')
 
   const { uploadUrl, key } = await authenticatedPost<{ uploadUrl: string; key: string }>('/api/kyb-upload-url', {
     contentType: file.type,
     size: file.size,
+    documentType,
   })
 
   const upload = await fetch(uploadUrl, {
@@ -54,8 +57,12 @@ export async function uploadTradeLicense(file: File): Promise<string> {
     headers: { 'Content-Type': file.type },
     body: file,
   })
-  if (!upload.ok) throw new Error('Trade licence upload failed. Please try again.')
+  if (!upload.ok) throw new Error('Verification document upload failed. Please try again.')
   return key
+}
+
+export async function uploadTradeLicense(file: File): Promise<string> {
+  return uploadKybDocument(file, 'trade_license')
 }
 
 export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Quote) {
@@ -100,7 +107,11 @@ export async function reviewProvider(providerId: string, action: 'verify_kyb' | 
   return authenticatedPost<{ ok: true }>('/api/admin-provider-review', { providerId, action, note })
 }
 
-export async function openTradeLicense(providerId: string) {
-  const payload = await authenticatedPost<{ url: string }>('/api/admin-kyb-document', { providerId })
+export async function openKybDocument(providerId: string, documentType: KybDocumentType) {
+  const payload = await authenticatedPost<{ url: string }>('/api/admin-kyb-document', { providerId, documentType })
   window.open(payload.url, '_blank', 'noopener,noreferrer')
+}
+
+export async function openTradeLicense(providerId: string) {
+  return openKybDocument(providerId, 'trade_license')
 }
