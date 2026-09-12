@@ -65,6 +65,59 @@ export async function uploadTradeLicense(file: File): Promise<string> {
   return uploadKybDocument(file, 'trade_license')
 }
 
+export interface ProviderPayoutItem {
+  id: string
+  amountFils: number
+  method: 'bank' | 'payment_link'
+  status: 'pending' | 'processing' | 'paid' | 'rejected' | string
+  destinationLabel?: string | null
+  createdAt?: string | null
+  updatedAt?: string | null
+}
+
+export interface ProviderPayoutSummary {
+  totalEarnedFils: number
+  availableFils: number
+  pendingFils: number
+  paidOutFils: number
+  eligibleBookingCount: number
+  payoutMethod?: 'bank' | 'payment_link' | null
+  bankAccountHolder?: string | null
+  bankName?: string | null
+  bankIban?: string | null
+  bankProofPath?: string | null
+  payoutPaymentLink?: string | null
+  payouts: ProviderPayoutItem[]
+}
+
+export async function getProviderPayoutSummary() {
+  return authenticatedPost<ProviderPayoutSummary>('/api/provider-payout-summary', {})
+}
+
+export async function uploadBankAccountProof(file: File): Promise<string> {
+  const allowedTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
+  if (!allowedTypes.has(file.type)) throw new Error('Upload a PDF, JPG, PNG or WebP bank document.')
+  if (file.size > 10 * 1024 * 1024) throw new Error('Bank proof must be smaller than 10 MB.')
+  const { uploadUrl, key } = await authenticatedPost<{ uploadUrl: string; key: string }>('/api/payout-upload-url', {
+    contentType: file.type,
+    size: file.size,
+  })
+  const upload = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
+  if (!upload.ok) throw new Error('Bank proof upload failed. Please try again.')
+  return key
+}
+
+export async function requestProviderPayout(input: {
+  method: 'bank' | 'payment_link'
+  bankAccountHolder?: string
+  bankName?: string
+  bankIban?: string
+  bankProofPath?: string | null
+  payoutPaymentLink?: string
+}) {
+  return authenticatedPost<{ id: string; amountFils: number; status: string; method: string; destinationLabel: string }>('/api/request-payout', input)
+}
+
 export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Quote) {
   if (quote.requestId !== request.id) throw new Error('Quote does not belong to this request.')
   const result = await authenticatedPost<{

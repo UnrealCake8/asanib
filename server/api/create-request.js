@@ -2,6 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
 import { providerCoversLocation, resolveUaeLocation } from './_locations.js'
 import { notifyUser } from './_notify.js'
+import { classifyServiceRequest, rankProvidersForRequest } from './_requestIntelligence.js'
 import { sendProviderRequestAlert } from './_whatsapp.js'
 
 function cleanText(value, max = 500) {
@@ -21,26 +22,35 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res)
   try {
     const user = await requireUser(req)
-    const request = {
+    const baseRequest = {
       query: cleanText(req.body?.query, 700),
       location: cleanText(req.body?.location, 160),
       budget: req.body?.budget == null ? null : Number(req.body.budget),
       urgency: cleanText(req.body?.urgency, 20),
       scheduledFor: req.body?.scheduledFor ? cleanText(req.body.scheduledFor, 80) : null,
-      category: cleanText(req.body?.category, 80),
-      summary: cleanText(req.body?.summary, 240),
     }
-    if (request.query.length < 8 || request.location.length < 2 || !request.category) return res.status(400).json({ error: 'Describe the job, area and service category.' })
-    if (!['now', 'today', 'scheduled'].includes(request.urgency)) return res.status(400).json({ error: 'Invalid urgency.' })
-    if (request.urgency === 'scheduled' && !request.scheduledFor) return res.status(400).json({ error: 'Choose a scheduled time.' })
-    if (request.budget != null && (!Number.isFinite(request.budget) || request.budget <= 0 || request.budget > 1000000)) return res.status(400).json({ error: 'Invalid budget.' })
+    if (baseRequest.query.length < 8 || baseRequest.location.length < 2) return res.status(400).json({ error: 'Describe the job and area.' })
+    if (!['now', 'today', 'scheduled'].includes(baseRequest.urgency)) return res.status(400).json({ error: 'Invalid urgency.' })
+    if (baseRequest.urgency === 'scheduled' && !baseRequest.scheduledFor) return res.status(400).json({ error: 'Choose a scheduled time.' })
+    if (baseRequest.budget != null && (!Number.isFinite(baseRequest.budget) || baseRequest.budget <= 0 || baseRequest.budget > 1000000)) return res.status(400).json({ error: 'Invalid budget.' })
+
+    const classification = await classifyServiceRequest(baseRequest)
+    const request = {
+      ...baseRequest,
+      category: classification.category,
+      summary: classification.summary,
+      serviceTags: classification.serviceTags,
+      routingSource: classification.source,
+      routingConfidence: classification.confidence,
+    }
 
     const locationData = await resolveUaeLocation(request.location)
     const providersSnapshot = await adminDb.collection('providers').where('approved', '==', true).get()
-    const providers = providersSnapshot.docs
+    const eligibleProviders = providersSnapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .filter((provider) => matchesProvider(provider, request, locationData))
       .slice(0, 100)
+    const providers = await rankProvidersForRequest(request, eligibleProviders)
 
     const requestRef = adminDb.collection('requests').doc()
     const batch = adminDb.batch()
@@ -52,7 +62,7 @@ export default async function handler(req, res) {
       matchCount: providers.length,
       createdAt: FieldValue.serverTimestamp(),
     })
-    for (const provider of providers) {
+    providers.forEach((provider, index) => {
       const matchRef = adminDb.collection('providerMatches').doc(provider.id).collection('requests').doc(requestRef.id)
       batch.set(matchRef, {
         id: requestRef.id,
@@ -61,10 +71,11 @@ export default async function handler(req, res) {
         ...request,
         locationData,
         status: 'open',
+        routingRank: index + 1,
         matchedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       })
-    }
+    })
     await batch.commit()
 
     await Promise.allSettled(providers.flatMap((provider) => [
@@ -77,7 +88,13 @@ export default async function handler(req, res) {
       sendProviderRequestAlert(provider, request, requestRef.id),
     ]))
 
-    return res.status(201).json({ id: requestRef.id, matchCount: providers.length, location: locationData })
+    return res.status(201).json({
+      id: requestRef.id,
+      matchCount: providers.length,
+      location: locationData,
+      category: request.category,
+      routingSource: request.routingSource,
+    })
   } catch (error) {
     return sendError(res, error)
   }
