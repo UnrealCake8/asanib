@@ -1,0 +1,424 @@
+/* Mobile-first corrections for the intentional customer marketplace redesign.
+   Keeps the desktop direction while making the customer flow feel native on phones. */
+
+@media (max-width: 700px) {
+  .customer-v2-shell {
+    overflow-x: hidden;
+  }
+
+  .customer-v2-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    min-height: 58px;
+    padding: 11px 14px;
+    background: rgba(247, 246, 241, .96);
+    backdrop-filter: blur(10px);
+  }
+
+  .customer-v2-header .brand {
+    font-size: 25px;
+  }
+
+  .customer-v2-actions {
+    gap: 10px;
+  }
+
+  .customer-v2-actions a {
+    display: none;
+  }
+
+  .customer-v2-actions button {
+    min-height: 40px;
+    padding: 0 2px;
+    font-size: 13px;
+  }
+
+  .customer-v2-content,
+  .customer-v2-content.tab-page {
+    width: 100%;
+    padding: 22px 14px calc(94px + env(safe-area-inset-bottom));
+  }
+
+  .app-welcome {
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  .app-welcome > div > span {
+    margin-bottom: 8px;
+    font-size: 10px;
+  }
+
+  .app-welcome h1 {
+    max-width: 10ch;
+    margin-bottom: 10px;
+    font-size: clamp(38px, 11.5vw, 50px);
+    line-height: .98;
+  }
+
+  .app-welcome p {
+    max-width: 32rem;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .active-job-pill {
+    margin-top: 14px;
+    min-height: 40px;
+    align-items: center;
+  }
+
+  /* Mobile service picker: swipeable, one-line directory instead of a desktop grid. */
+  .service-launcher {
+    display: flex;
+    width: calc(100% + 28px);
+    margin: 0 -14px 18px;
+    padding: 0 14px 4px;
+    gap: 8px;
+    overflow-x: auto;
+    border: 0;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .service-launcher::-webkit-scrollbar {
+    display: none;
+  }
+
+  .service-launcher button {
+    flex: 0 0 auto;
+    min-width: 118px;
+    min-height: 58px;
+    padding: 11px 12px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 9px;
+    border: 1px solid var(--rf-line);
+    border-radius: 12px;
+    background: var(--rf-surface);
+    scroll-snap-align: start;
+  }
+
+  .service-launcher button::before {
+    display: none;
+  }
+
+  .service-launcher button span {
+    display: inline-flex;
+    width: 25px;
+    height: 25px;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 25px;
+    border-radius: 50%;
+    background: var(--rf-green-soft);
+    color: var(--rf-green-dark);
+    font-size: 13px;
+  }
+
+  .service-launcher button strong {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .app-request-card {
+    margin: 0;
+    overflow: visible;
+    border-color: var(--rf-line);
+    border-radius: 16px;
+    background: var(--rf-surface);
+  }
+
+  .app-request-card .request-card-heading {
+    min-height: 58px;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .app-request-card .request-card-heading > div:first-child {
+    display: block;
+  }
+
+  .app-request-card .request-card-heading strong {
+    display: block;
+    margin-top: 3px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .app-request-card .request-live {
+    flex: 0 0 auto;
+    font-size: 10px;
+  }
+
+  .app-request-card .search-field {
+    display: block;
+    min-height: auto;
+    padding: 0;
+  }
+
+  .app-request-card .search-icon {
+    display: none;
+  }
+
+  .app-request-card .search-field textarea {
+    width: 100%;
+    min-height: 118px;
+    padding: 16px 14px;
+    font-size: 17px;
+    line-height: 1.45;
+    resize: none;
+  }
+
+  .app-request-card .form-grid {
+    display: block;
+  }
+
+  .app-request-card .form-grid > label {
+    padding: 13px 14px 15px;
+  }
+
+  .app-request-card .form-grid > label + label {
+    border-top: 1px solid var(--rf-line);
+    border-left: 0;
+  }
+
+  .app-request-card .form-grid input,
+  .app-request-card .location-input input,
+  .app-request-card .money-input input,
+  .app-request-card .inline-field input {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .app-request-card .money-input {
+    min-height: 46px;
+    align-items: center;
+  }
+
+  .app-request-card .urgency-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .app-request-card .urgency-row .chip {
+    min-height: 50px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .app-request-card .inline-field {
+    padding: 13px 14px 15px;
+  }
+
+  .app-request-card .request-submit {
+    position: sticky;
+    bottom: calc(67px + env(safe-area-inset-bottom));
+    z-index: 12;
+    min-height: 56px;
+    border-radius: 0 0 15px 15px;
+    font-size: 15px;
+  }
+
+  .app-live-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 13px 0;
+  }
+
+  .app-live-strip > div {
+    display: block;
+    min-width: 0;
+  }
+
+  .app-live-strip strong {
+    display: block;
+    margin-top: 3px;
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-live-strip button {
+    min-height: 40px;
+    flex: 0 0 auto;
+  }
+
+  .tab-page-title {
+    margin-bottom: 20px;
+  }
+
+  .tab-page-title h1,
+  .request-title-row h1 {
+    font-size: clamp(34px, 10vw, 44px);
+    line-height: 1;
+  }
+
+  .app-list-card,
+  .customer-booking-card {
+    padding: 16px 0;
+  }
+
+  .app-list-card {
+    gap: 12px;
+  }
+
+  .app-list-card > div {
+    min-width: 0;
+  }
+
+  .app-list-card strong {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .booking-card-top,
+  .request-title-row {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .booking-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .booking-actions a,
+  .quote-card .primary,
+  .checkout-option {
+    min-height: 46px;
+  }
+
+  .request-facts {
+    display: block;
+  }
+
+  .request-facts > div {
+    padding: 12px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--rf-line);
+  }
+
+  .request-facts > div:last-child {
+    border-bottom: 0;
+  }
+
+  .quote-grid,
+  .checkout-options {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-card,
+  .checkout-choice,
+  .success-panel,
+  .empty-state.large {
+    border-radius: 12px;
+  }
+
+  /* Restore a genuinely useful phone navigation bar. */
+  .customer-mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    min-height: calc(66px + env(safe-area-inset-bottom));
+    padding: 5px 6px env(safe-area-inset-bottom);
+    background: rgba(247, 246, 241, .98);
+    backdrop-filter: blur(14px);
+  }
+
+  .customer-mobile-nav button {
+    min-width: 0;
+    min-height: 56px;
+    padding: 4px 2px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 750;
+  }
+
+  .customer-mobile-nav button span {
+    display: block;
+    min-height: 22px;
+    margin-bottom: 2px;
+    color: currentColor;
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .customer-mobile-nav button.active {
+    background: var(--rf-green-soft);
+    color: var(--rf-green-dark);
+  }
+
+  .customer-mobile-nav button.active::before {
+    display: none;
+  }
+
+  .customer-mobile-nav button b {
+    top: 3px;
+    right: calc(50% - 22px);
+  }
+
+  .mobile-sheet {
+    width: 100%;
+    max-width: none;
+    max-height: min(88vh, 720px);
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .customer-v2-content,
+  .customer-v2-content.tab-page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .service-launcher {
+    width: calc(100% + 24px);
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .app-welcome h1 {
+    font-size: 39px;
+  }
+
+  .app-request-card .request-live {
+    display: none;
+  }
+
+  .app-request-card .urgency-row .chip {
+    font-size: 11px;
+  }
+
+  .customer-mobile-nav button {
+    font-size: 9px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .service-launcher button,
+  .customer-v2-actions button,
+  .app-live-strip button,
+  .booking-actions a,
+  .text-button,
+  .danger-link {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
