@@ -10,6 +10,7 @@ import './customer.css'
 import './product.css'
 import './v2.css'
 import './ziina.css'
+import './mobile-refresh.css'
 
 registerSW({ immediate: true })
 

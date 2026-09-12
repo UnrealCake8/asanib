@@ -225,12 +225,10 @@ export function watchOpenRequests(callback: (items: ServiceRequest[]) => void): 
     return () => undefined
   }
   const q = query(collection(db, 'providerMatches', providerId, 'requests'), orderBy('createdAt', 'desc'))
-  const stop = onSnapshot(q, (snapshot) => callback(snapshot.docs
-    .map((snapshot) => {
-      const data = snapshot.data() as Record<string, unknown>
-      return { id: String(data.requestId || snapshot.id), ...(data as Omit<ServiceRequest, 'id'>) }
-    })
-    .filter((request) => request.status === 'open')))
+  const stop = onSnapshot(q, (snapshot) => callback(snapshot.docs.map((snapshot) => {
+    const data = snapshot.data() as Record<string, unknown>
+    return { id: String(data.requestId || snapshot.id), ...(data as Omit<ServiceRequest, 'id'>) }
+  })))
   return () => { stop(); return undefined }
 }
 

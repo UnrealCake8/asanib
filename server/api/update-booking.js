@@ -24,8 +24,21 @@ export default async function handler(req, res) {
     if (!allowed.get(current)?.has(status)) return res.status(409).json({ error: `Cannot move booking from ${current} to ${status}.` })
 
     await ref.update({ status, updatedAt: FieldValue.serverTimestamp() })
-    const requestRef = adminDb.collection('requests').doc(String(snap.data().requestId))
-    if (status === 'completed') await requestRef.update({ status: 'completed', completedAt: FieldValue.serverTimestamp() })
+    const requestId = String(snap.data().requestId)
+    const requestRef = adminDb.collection('requests').doc(requestId)
+    if (status === 'completed') {
+      await requestRef.update({ status: 'completed', acceptedProviderId: snap.data().providerId, completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() })
+      const matches = await adminDb.collectionGroup('requests').where('requestId', '==', requestId).get()
+      if (!matches.empty) {
+        const batch = adminDb.batch()
+        matches.docs.forEach((doc) => batch.update(doc.ref, {
+          status: 'completed',
+          acceptedProviderId: snap.data().providerId,
+          updatedAt: FieldValue.serverTimestamp(),
+        }))
+        await batch.commit()
+      }
+    }
 
     const copy = status === 'in_progress'
       ? `${snap.data().providerName} marked your job as in progress.`
