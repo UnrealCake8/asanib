@@ -1,5 +1,4 @@
-import { getStorage, ref, uploadBytes } from 'firebase/storage'
-import { auth, firebaseApp } from './firebase'
+import { auth } from './firebase'
 import type { ProviderProfile, Quote, ServiceRequest } from '../types'
 
 async function authenticatedPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
@@ -40,17 +39,23 @@ export async function saveProviderBusiness(input: {
 
 export async function uploadTradeLicense(file: File): Promise<string> {
   const user = auth?.currentUser
-  if (!user || !firebaseApp) throw new Error('Provider sign-in required.')
-  const allowed = file.type === 'application/pdf' || file.type.startsWith('image/')
-  if (!allowed) throw new Error('Upload a PDF or image of the trade licence.')
+  if (!user) throw new Error('Provider sign-in required.')
+  const allowedTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
+  if (!allowedTypes.has(file.type)) throw new Error('Upload a PDF, JPG, PNG or WebP trade licence.')
   if (file.size > 10 * 1024 * 1024) throw new Error('Trade licence files must be smaller than 10 MB.')
 
-  const extension = file.name.includes('.') ? file.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) : ''
-  const filename = `trade-licence-${Date.now()}${extension ? `.${extension}` : ''}`
-  const path = `kyb/${user.uid}/${filename}`
-  const storage = getStorage(firebaseApp)
-  await uploadBytes(ref(storage, path), file, { contentType: file.type || 'application/octet-stream' })
-  return path
+  const { uploadUrl, key } = await authenticatedPost<{ uploadUrl: string; key: string }>('/api/kyb-upload-url', {
+    contentType: file.type,
+    size: file.size,
+  })
+
+  const upload = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
+  if (!upload.ok) throw new Error('Trade licence upload failed. Please try again.')
+  return key
 }
 
 export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Quote) {
