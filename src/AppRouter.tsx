@@ -1,5 +1,6 @@
-import App from './App'
-import ProviderHub from './ProviderHub'
+import CustomerAppV2 from './CustomerAppV2'
+import ProviderHubV2 from './ProviderHubV2'
+import AdminV2 from './AdminV2'
 import LegalPage from './LegalPages'
 
 function OperatorFooter() {
@@ -9,11 +10,12 @@ function OperatorFooter() {
 export default function AppRouter() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
 
-  if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHub />
+  if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHubV2 />
+  if (path === '/admin' || path.startsWith('/admin/')) return <AdminV2 />
   if (path === '/privacy') return <LegalPage kind="privacy" />
   if (path === '/terms') return <LegalPage kind="terms" />
   if (path === '/cookies') return <LegalPage kind="cookies" />
   if (path === '/refunds') return <LegalPage kind="refunds" />
 
-  return <><App /><OperatorFooter /></>
+  return <><CustomerAppV2 /><OperatorFooter /></>
 }
