@@ -27,6 +27,14 @@ function safeCheckoutUrl(value) {
   return url.toString()
 }
 
+async function verifiedKybPath(submitted, existing, userId, label) {
+  const value = clean(submitted, 500) || existing || null
+  if (!submitted) return value
+  if (!value.startsWith(`kyb/${userId}/`)) throw Object.assign(new Error(`Invalid ${label} document.`), { statusCode: 400 })
+  if (!await r2ObjectExists(value)) throw Object.assign(new Error(`${label} upload could not be verified.`), { statusCode: 400 })
+  return value
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res)
   try {
@@ -50,19 +58,11 @@ export default async function handler(req, res) {
     const licensingAuthority = clean(req.body?.licensingAuthority, 140) || null
     const licenseExpiry = clean(req.body?.licenseExpiry, 30) || null
     const representativeName = clean(req.body?.representativeName, 160) || null
-    const submittedTradeLicensePath = clean(req.body?.tradeLicensePath, 500) || null
-    let tradeLicensePath = submittedTradeLicensePath || existing?.tradeLicensePath || null
     const representativeConfirmed = req.body?.representativeConfirmed === true
 
-    if (submittedTradeLicensePath) {
-      if (!submittedTradeLicensePath.startsWith(`kyb/${user.uid}/`)) {
-        return res.status(400).json({ error: 'Invalid trade licence document.' })
-      }
-      if (!await r2ObjectExists(submittedTradeLicensePath)) {
-        return res.status(400).json({ error: 'Trade licence upload could not be verified.' })
-      }
-      tradeLicensePath = submittedTradeLicensePath
-    }
+    const tradeLicensePath = await verifiedKybPath(req.body?.tradeLicensePath, existing?.tradeLicensePath, user.uid, 'trade licence')
+    const emiratesIdFrontPath = await verifiedKybPath(req.body?.emiratesIdFrontPath, existing?.emiratesIdFrontPath, user.uid, 'Emirates ID front')
+    const emiratesIdBackPath = await verifiedKybPath(req.body?.emiratesIdBackPath, existing?.emiratesIdBackPath, user.uid, 'Emirates ID back')
 
     const checkoutUrl = safeCheckoutUrl(req.body?.checkoutUrl)
     const checkoutProvider = clean(req.body?.checkoutProvider, 80) || null
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
 
     const kybComplete = Boolean(
       legalBusinessName && tradeLicenseNumber && licensingAuthority && licenseExpiry &&
-      representativeName && representativeConfirmed && tradeLicensePath
+      representativeName && representativeConfirmed && tradeLicensePath && emiratesIdFrontPath && emiratesIdBackPath
     )
     const kybCriticalChanged = existingSnap.exists && [
       ['legalBusinessName', legalBusinessName],
@@ -83,6 +83,8 @@ export default async function handler(req, res) {
       ['licenseExpiry', licenseExpiry],
       ['representativeName', representativeName],
       ['tradeLicensePath', tradeLicensePath],
+      ['emiratesIdFrontPath', emiratesIdFrontPath],
+      ['emiratesIdBackPath', emiratesIdBackPath],
     ].some(([key, value]) => (existing?.[key] ?? null) !== value)
 
     let kybStatus = String(existing?.kybStatus || 'not_started')
@@ -111,6 +113,8 @@ export default async function handler(req, res) {
       representativeName,
       representativeConfirmed,
       tradeLicensePath,
+      emiratesIdFrontPath,
+      emiratesIdBackPath,
       kybStatus,
       kybSubmittedAt: kybComplete && kybStatus === 'pending' ? FieldValue.serverTimestamp() : existing?.kybSubmittedAt || null,
       checkoutUrl,
