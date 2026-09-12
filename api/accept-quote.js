@@ -33,6 +33,7 @@ export default async function handler(req, res) {
         checkoutUrl: quote.checkoutUrl || null,
         checkoutProvider: quote.checkoutProvider || null,
         checkoutHost: quote.checkoutHost || null,
+        paymentStatus: 'not_started',
         status: 'booked',
         createdAt: FieldValue.serverTimestamp(),
       })
@@ -52,8 +53,11 @@ export default async function handler(req, res) {
     })
     await batch.commit()
 
+    const ziinaSnap = await adminDb.collection('providerZiinaConnections').doc(outcome.providerId).get()
+    const asanibCheckoutAvailable = ziinaSnap.exists && ziinaSnap.data()?.accountStatus === 'active'
+
     await notifyUser(outcome.providerId, 'Your Asanib quote was accepted', 'The customer booked your quote. Open Asanib to view the job.', '/provider')
-    return res.status(200).json({ bookingId: bookingRef.id, ...outcome })
+    return res.status(200).json({ bookingId: bookingRef.id, asanibCheckoutAvailable, ...outcome })
   } catch (error) {
     return sendError(res, error)
   }
