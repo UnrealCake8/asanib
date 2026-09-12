@@ -422,3 +422,67 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* Final mobile cascade guard.
+   Older mobile-refresh.css uses !important and v2.css leaves a translateX transform behind.
+   These rules intentionally win so the deployed phone layout matches this file. */
+@media (max-width: 700px) {
+  .customer-v2-content,
+  .customer-v2-content.tab-page {
+    padding: 22px 14px calc(94px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-welcome h1 {
+    font-size: clamp(38px, 11.5vw, 50px) !important;
+  }
+
+  .service-launcher {
+    display: flex !important;
+    grid-template-columns: none !important;
+  }
+
+  .app-request-card {
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+  }
+
+  .customer-mobile-nav {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: auto !important;
+    transform: none !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    padding: 5px 6px env(safe-area-inset-bottom) !important;
+    border: 0 !important;
+    border-top: 1px solid var(--rf-line) !important;
+    border-radius: 0 !important;
+    background: rgba(247, 246, 241, .98) !important;
+    box-shadow: none !important;
+  }
+
+  .customer-mobile-nav button {
+    min-width: 0 !important;
+    min-height: 56px !important;
+    padding: 4px 2px !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: #707873 !important;
+    font-size: 10px !important;
+  }
+
+  .customer-mobile-nav button.active {
+    background: var(--rf-green-soft) !important;
+    color: var(--rf-green-dark) !important;
+    box-shadow: none !important;
+  }
+
+  .customer-mobile-nav button > span {
+    display: block !important;
+    font-size: 18px !important;
+    line-height: 22px !important;
+  }
+}
