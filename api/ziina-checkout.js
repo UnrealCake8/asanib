@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
 import { getProviderZiinaToken, ziinaApi } from './_ziina.js'
@@ -42,7 +41,6 @@ export default async function handler(req, res) {
 
     const token = await getProviderZiinaToken(String(booking.providerId))
     const origin = originFromReq(req)
-    const operationId = randomUUID()
     const payment = await ziinaApi('/payment_intent', token, {
       method: 'POST',
       body: JSON.stringify({
@@ -54,7 +52,6 @@ export default async function handler(req, res) {
         failure_url: `${origin}/checkout/${bookingId}?payment=failed&id={PAYMENT_INTENT_ID}`,
         test: process.env.ZIINA_TEST_MODE === 'true',
         allow_tips: false,
-        operation_id: operationId,
       }),
     })
 
@@ -70,7 +67,7 @@ export default async function handler(req, res) {
         amountFils,
         currency: 'AED',
         status: payment.status || 'requires_payment_instrument',
-        operationId,
+        ziinaOperationId: payment.operation_id || null,
         embeddedUrl: payment.embedded_url,
         accountId: payment.account_id || null,
         test: process.env.ZIINA_TEST_MODE === 'true',
