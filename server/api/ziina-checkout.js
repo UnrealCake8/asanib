@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       if (existingPayment.exists && !['failed', 'canceled'].includes(String(existingPayment.data()?.status || ''))) {
         return res.status(200).json({
           paymentIntentId: existingPayment.id,
-          embeddedUrl: existingPayment.data()?.embeddedUrl,
+          redirectUrl: existingPayment.data()?.redirectUrl,
           status: existingPayment.data()?.status || 'requires_payment_instrument',
           amountFils,
           providerName: booking.providerName,
@@ -49,16 +49,16 @@ export default async function handler(req, res) {
         amount: amountFils,
         currency_code: 'AED',
         message: `Asanib booking ${bookingId.slice(0, 8)} · ${String(booking.providerName || 'Provider').slice(0, 80)}`,
-        success_url: `${origin}/checkout/${bookingId}?payment=success&id={PAYMENT_INTENT_ID}`,
-        cancel_url: `${origin}/checkout/${bookingId}?payment=cancelled&id={PAYMENT_INTENT_ID}`,
-        failure_url: `${origin}/checkout/${bookingId}?payment=failed&id={PAYMENT_INTENT_ID}`,
+        success_url: `${origin}/checkout/${bookingId}?payment=success`,
+        cancel_url: `${origin}/checkout/${bookingId}?payment=cancelled`,
+        failure_url: `${origin}/checkout/${bookingId}?payment=failed`,
         test: process.env.ZIINA_TEST_MODE === 'true',
         allow_tips: false,
         operation_id: operationId,
       }),
     })
 
-    if (!payment?.id || !payment?.embedded_url) throw Object.assign(new Error('Ziina did not return embedded checkout details.'), { statusCode: 502 })
+    if (!payment?.id || !payment?.redirect_url) throw Object.assign(new Error('Ziina did not return a hosted checkout URL.'), { statusCode: 502 })
 
     const paymentRef = adminDb.collection('asanibPayments').doc(String(payment.id))
     await adminDb.runTransaction(async (tx) => {
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
         currency: 'AED',
         status: payment.status || 'requires_payment_instrument',
         operationId,
-        embeddedUrl: payment.embedded_url,
+        redirectUrl: payment.redirect_url,
         accountId: payment.account_id || null,
         test: process.env.ZIINA_TEST_MODE === 'true',
         createdAt: FieldValue.serverTimestamp(),
@@ -90,7 +90,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       paymentIntentId: payment.id,
-      embeddedUrl: payment.embedded_url,
+      redirectUrl: payment.redirect_url,
       status: payment.status || 'requires_payment_instrument',
       amountFils,
       providerName: booking.providerName,
