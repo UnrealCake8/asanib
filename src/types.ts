@@ -53,6 +53,11 @@ export interface ProviderProfile {
   areas: string[]
   availableNow: boolean
   approved: boolean
+  locationSharingEnabled?: boolean
+  currentLat?: number | null
+  currentLng?: number | null
+  locationAccuracy?: number | null
+  lastLocationAt?: unknown
   legalBusinessName?: string | null
   tradeLicenseNumber?: string | null
   licensingAuthority?: string | null
