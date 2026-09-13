@@ -101,7 +101,7 @@ function leadMessage(provider, request) {
   ].filter((line) => line !== null).join('\n')
 }
 
-async function sendGatewayMessage(to, message) {
+export async function sendGatewayMessage(to, message) {
   const { url, secret } = gatewayConfig()
   if (!secret) throw new Error('WHATSAPP_GATEWAY_SECRET is not configured.')
   const controller = new AbortController()
