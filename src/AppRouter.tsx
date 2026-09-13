@@ -1,4 +1,5 @@
 import CustomerAppV2 from './CustomerAppV2'
+import ExternalMatchedRequest from './ExternalMatchedRequest'
 import ProviderHubV3 from './ProviderHubV3'
 import ProviderPayouts from './ProviderPayouts'
 import AdminV2 from './AdminV2'
@@ -13,8 +14,10 @@ function OperatorFooter() {
 export default function AppRouter() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
   const checkoutMatch = path.match(/^\/checkout\/([^/]+)$/)
+  const requestMatch = path.match(/^\/request\/([^/]+)$/)
 
   if (checkoutMatch) return <ZiinaCheckoutPage bookingId={checkoutMatch[1]} />
+  if (requestMatch) return <><ExternalMatchedRequest requestId={requestMatch[1]} /><OperatorFooter /></>
   if (path === '/provider/payouts') return <ProviderPayouts />
   if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHubV3 />
   if (path === '/admin/external') return <ExternalOps />

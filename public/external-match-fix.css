@@ -1,0 +1,15 @@
+/* Customer request state after an External provider accepts the lead. */
+.customer-v2-content:has(.request-detail-v2 .status.open):has(.request-detail-v2 + .success-panel) .quote-section {
+  display: none;
+}
+
+.customer-v2-content:has(.request-detail-v2 .status.open) > .request-detail-v2 + .success-panel::after {
+  content: "What happens now? The business will contact you directly to confirm the job, timing and price. You pay the business directly.";
+  display: block;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid currentColor;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  opacity: 0.78;
+}
