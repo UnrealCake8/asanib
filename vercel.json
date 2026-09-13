@@ -12,6 +12,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/whatsapp/inbound", "destination": "/api/whatsapp-inbound" },
     { "source": "/request/:path*", "destination": "/index.html" },
     { "source": "/provider/:path*", "destination": "/index.html" },
     { "source": "/admin/:path*", "destination": "/index.html" },
