@@ -19,17 +19,6 @@ import {
 import { acceptQuoteWithCheckout } from './lib/marketplaceApi'
 import type { Booking, ParsedRequest, Quote, Review, ServiceRequest, ServiceRequestDraft, Urgency } from './types'
 
-const services = [
-  { icon: '⌂', title: 'Cleaning', prompt: 'I need a cleaner' },
-  { icon: '❄', title: 'AC', prompt: 'I need an AC technician' },
-  { icon: '↯', title: 'Electrical', prompt: 'I need an electrician' },
-  { icon: '◌', title: 'Plumbing', prompt: 'I need a plumber' },
-  { icon: '◉', title: 'Auto', prompt: 'I need help with my car' },
-  { icon: '✦', title: 'Beauty', prompt: 'I need a beauty service' },
-  { icon: '↗', title: 'Delivery', prompt: 'I need something collected and delivered' },
-  { icon: '＋', title: 'More', prompt: 'I need someone local who can help me with' },
-]
-
 function parseDraft(draft: ServiceRequestDraft): ParsedRequest {
   const q = draft.query.toLowerCase()
   const category = q.includes('ac') || q.includes('clean') || q.includes('plumb') || q.includes('electric') || q.includes('handyman')
@@ -115,12 +104,6 @@ function Home() {
   const activeBookings = bookings.filter((item) => item.status === 'booked' || item.status === 'in_progress')
   const reviewByBooking = new Map(reviews.map((review) => [review.bookingId, review]))
 
-  function startWith(prompt: string) {
-    setQueryText(prompt)
-    setTab('home')
-    window.setTimeout(() => document.getElementById('asanib-request')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30)
-  }
-
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!canSubmit) return
@@ -135,8 +118,6 @@ function Home() {
   return <main className="customer-v2-shell"><header className="customer-v2-header"><a className="brand" href="/">asanib<span>.</span></a><div className="customer-v2-actions"><a href="/provider">For businesses</a><button type="button" onClick={() => setAccountOpen(true)}>{user && !user.isAnonymous ? 'Account' : 'Sign in'}</button></div></header>
 
     {tab === 'home' && <div className="customer-v2-content"><section className="app-welcome"><div><span>LOCAL HELP, IN ONE PLACE</span><h1>What do you need?</h1><p>Describe it once. Relevant local businesses can quote you.</p></div>{activeBookings.length > 0 && <a className="active-job-pill" href="#bookings" onClick={() => setTab('bookings')}>{activeBookings.length} active job{activeBookings.length === 1 ? '' : 's'} →</a>}</section>
-
-      <section className="service-launcher" aria-label="Services">{services.map((service) => <button key={service.title} type="button" onClick={() => startWith(service.prompt)}><span>{service.icon}</span><strong>{service.title}</strong></button>)}</section>
 
       <form id="asanib-request" className="request-card app-request-card" onSubmit={submit}><div className="request-card-heading"><div><span>START A REQUEST</span><strong>Tell Asanib what needs doing</strong></div><div className="request-live"><i /> Live quotes</div></div><label className="search-field"><span className="search-icon">⌕</span><textarea value={queryText} onChange={(e) => setQueryText(e.target.value)} placeholder="e.g. My AC stopped cooling. Need someone in Al Barsha today." rows={3} /></label><div className="form-grid"><label><span>Where?</span><LocationInput value={location} onChange={setLocation} required /></label><label><span>Maximum budget</span><div className="money-input"><b>AED</b><input inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value.replace(/\D/g, ''))} placeholder="Optional" /></div></label></div><div className="urgency-row">{(['now', 'today', 'scheduled'] as Urgency[]).map((value) => <button type="button" className={urgency === value ? 'chip active' : 'chip'} onClick={() => setUrgency(value)} key={value}>{value === 'now' ? '⚡ Now' : value === 'today' ? 'Today' : 'Choose time'}</button>)}</div>{urgency === 'scheduled' && <div className="inline-field"><label>When?</label><input type="datetime-local" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} required /></div>}{error && <div className="notice error">{error}</div>}<button className="primary request-submit" disabled={!canSubmit || saving}>{saving ? 'Finding providers…' : 'Find providers'}</button></form>
 
