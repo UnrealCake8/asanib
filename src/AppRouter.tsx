@@ -15,7 +15,7 @@ export default function AppRouter() {
 
   if (checkoutMatch) return <ZiinaCheckoutPage bookingId={checkoutMatch[1]} />
   if (path === '/provider/payouts') return <ProviderPayouts />
-  if (path === '/provider' || path.startsWith('/provider/')) return <><ProviderHubV3 /><a className="provider-payout-shortcut" href="/provider/payouts">Payouts</a></>
+  if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHubV3 />
   if (path === '/admin' || path.startsWith('/admin/')) return <AdminV2 />
   if (path === '/privacy') return <LegalPage kind="privacy" />
   if (path === '/terms') return <LegalPage kind="terms" />
