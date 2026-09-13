@@ -24,8 +24,8 @@ export interface ServiceRequestDraft {
   budget?: number
   urgency: Urgency
   scheduledFor?: string
-  contactPhone: string
-  shareContactConsent: boolean
+  contactPhone?: string
+  shareContactConsent?: boolean
 }
 
 export interface ParsedRequest extends ServiceRequestDraft {
