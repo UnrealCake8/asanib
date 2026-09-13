@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://asanib-1.vercel.app/sitemap.xml
+Sitemap: https://asanib.com/sitemap.xml
