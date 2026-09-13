@@ -1,4 +1,6 @@
 import acceptQuote from '../server/api/accept-quote.js'
+import adminExternalDispatch from '../server/api/admin-external-dispatch.js'
+import adminExternalProvider from '../server/api/admin-external-provider.js'
 import adminKybDocument from '../server/api/admin-kyb-document.js'
 import adminPayoutReview from '../server/api/admin-payout-review.js'
 import adminProviderReview from '../server/api/admin-provider-review.js'
@@ -20,6 +22,8 @@ import ziinaWebhook from '../server/api/ziina-webhook.js'
 
 const handlers = {
   'accept-quote': acceptQuote,
+  'admin-external-dispatch': adminExternalDispatch,
+  'admin-external-provider': adminExternalProvider,
   'admin-kyb-document': adminKybDocument,
   'admin-payout-review': adminPayoutReview,
   'admin-provider-review': adminProviderReview,

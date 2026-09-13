@@ -101,5 +101,20 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'comment', 'updatedAt']);
       allow delete: if false;
     }
+
+    match /externalProviders/{providerId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /externalLeadDispatches/{dispatchId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /whatsappInboundEvents/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
   }
 }

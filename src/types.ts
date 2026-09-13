@@ -24,6 +24,8 @@ export interface ServiceRequestDraft {
   budget?: number
   urgency: Urgency
   scheduledFor?: string
+  contactPhone?: string
+  shareContactConsent?: boolean
 }
 
 export interface ParsedRequest extends ServiceRequestDraft {
@@ -39,8 +41,45 @@ export interface ServiceRequest extends ParsedRequest {
   acceptedProviderId?: string
   closedReason?: string
   locationData?: LocationData
+  externalMatchStatus?: string
+  externalLastProviderId?: string
+  matchedExternalProviderId?: string
+  matchedExternalProviderName?: string
   createdAt?: unknown
   updatedAt?: unknown
+}
+
+export interface ExternalProvider {
+  id: string
+  businessName: string
+  whatsapp: string
+  phone?: string
+  categories: string[]
+  areas: string[]
+  sourceUrl?: string | null
+  notes?: string | null
+  leadOptIn?: boolean | null
+  archived?: boolean
+  lastContactedAt?: unknown
+  lastWhatsappInboundAt?: string | null
+  lastWhatsappMessage?: string | null
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
+export interface ExternalLeadDispatch {
+  id: string
+  requestId: string
+  providerId: string
+  providerName: string
+  providerWhatsapp: string
+  status: string
+  preparedMessage?: string | null
+  replyType?: string | null
+  replyText?: string | null
+  createdAt?: unknown
+  sentAt?: unknown
+  repliedAt?: string | null
 }
 
 export interface ProviderProfile {
