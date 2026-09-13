@@ -41,10 +41,10 @@ async function findExternalProvider(from) {
 }
 
 async function findLatestOpenDispatch(from) {
-  const snapshot = await adminDb.collection('externalLeadDispatches').where('providerWhatsapp', '==', from).limit(25).get()
+  const snapshot = await adminDb.collection('externalLeadDispatches').where('providerWhatsapp', '==', from).limit(40).get()
   const rows = snapshot.docs
     .map((doc) => ({ id: doc.id, ref: doc.ref, ...doc.data() }))
-    .filter((row) => ['sent', 'awaiting_reply'].includes(String(row.status || '')))
+    .filter((row) => ['sending', 'sent', 'awaiting_reply'].includes(String(row.status || '')))
     .sort((a, b) => millis(b.sentAt || b.createdAt) - millis(a.sentAt || a.createdAt))
   return rows[0] || null
 }
@@ -53,7 +53,7 @@ function customerDetailsReply(request) {
   const phone = String(request?.contactPhone || '').replace(/\D/g, '')
   if (!phone || !request?.shareContactConsent) return null
   return [
-    'Thanks, here are the customer details for this Asanib lead:',
+    'Thanks, you got this Asanib lead.',
     '',
     request.query,
     `Location: ${request.location}`,
@@ -64,6 +64,64 @@ function customerDetailsReply(request) {
     '',
     'Please contact the customer directly. Asanib does not take commission, and you keep 100% of the service payment.',
   ].filter(Boolean).join('\n')
+}
+
+async function closeOtherDispatches(requestId, winningDispatchId) {
+  const snapshot = await adminDb.collection('externalLeadDispatches').where('requestId', '==', requestId).limit(100).get()
+  const others = snapshot.docs.filter((doc) => doc.id !== winningDispatchId && ['sending', 'sent', 'awaiting_reply'].includes(String(doc.data().status || '')))
+  if (!others.length) return
+  const batch = adminDb.batch()
+  others.forEach((doc) => batch.set(doc.ref, { status: 'closed_after_match', closedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true }))
+  await batch.commit()
+}
+
+async function handleInterested(dispatch, provider, receivedAt, text) {
+  if (!dispatch?.requestId) return { replyText: 'Thanks. This lead is no longer available.', won: false }
+  const requestRef = adminDb.collection('requests').doc(String(dispatch.requestId))
+  const result = await adminDb.runTransaction(async (transaction) => {
+    const requestSnap = await transaction.get(requestRef)
+    if (!requestSnap.exists) {
+      transaction.set(dispatch.ref, { status: 'closed_missing_request', replyType: 'interested', replyText: text, repliedAt: receivedAt, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+      return { won: false, replyText: 'Thanks. This lead is no longer available.' }
+    }
+
+    const request = requestSnap.data()
+    const winnerId = String(request.matchedExternalProviderId || '')
+    const currentProviderId = String(dispatch.providerId || provider?.id || '')
+    if (request.status !== 'open' || (winnerId && winnerId !== currentProviderId)) {
+      transaction.set(dispatch.ref, { status: 'closed_after_match', replyType: 'interested', replyText: text, repliedAt: receivedAt, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+      return { won: false, replyText: 'Thanks for replying. Another provider has already taken this Asanib lead.' }
+    }
+
+    const replyText = customerDetailsReply(request)
+    if (!replyText) {
+      transaction.set(dispatch.ref, { status: 'contact_not_authorized', replyType: 'interested', replyText: text, repliedAt: receivedAt, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+      return { won: false, replyText: 'Thanks. Asanib cannot release the customer contact details for this request.' }
+    }
+
+    transaction.set(requestRef, {
+      externalMatchStatus: 'provider_interested',
+      matchedExternalProviderId: currentProviderId || null,
+      matchedExternalProviderName: dispatch.providerName || provider?.businessName || null,
+      externalLastReplyAt: receivedAt,
+      externalAutoDispatchStoppedAt: receivedAt,
+      nextExternalDispatchAt: null,
+      externalDispatchLockUntil: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+    transaction.set(dispatch.ref, {
+      status: 'customer_details_released',
+      replyType: 'interested',
+      replyText: text,
+      repliedAt: receivedAt,
+      customerDetailsReleasedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+    return { won: true, replyText }
+  })
+
+  if (result.won) await closeOtherDispatches(String(dispatch.requestId), dispatch.id)
+  return result
 }
 
 async function applyReplyAction({ from, replyType, text, receivedAt }) {
@@ -79,7 +137,7 @@ async function applyReplyAction({ from, replyType, text, receivedAt }) {
       patch.whatsappOptOutAt = receivedAt
     } else if (replyType === 'interested') {
       patch.leadOptIn = true
-      patch.leadOptInAt = receivedAt
+      patch.leadOptInAt = provider.leadOptInAt || receivedAt
       patch.lastInterestedAt = receivedAt
     } else if (replyType === 'join') {
       patch.registrationInterestAt = receivedAt
@@ -89,32 +147,23 @@ async function applyReplyAction({ from, replyType, text, receivedAt }) {
     updates.push(provider.ref.set(patch, { merge: true }))
   }
 
-  if (dispatch) {
+  if (dispatch && replyType === 'interested') {
+    const result = await handleInterested(dispatch, provider, receivedAt, text)
+    replyText = result.replyText
+  } else if (dispatch) {
     let status = dispatch.status
-    if (replyType === 'interested') status = 'interested'
     if (replyType === 'declined') status = 'declined'
     if (replyType === 'stop') status = 'opted_out'
-
-    if (replyType === 'interested' && dispatch.requestId) {
-      const requestRef = adminDb.collection('requests').doc(String(dispatch.requestId))
-      const requestSnap = await requestRef.get()
-      if (requestSnap.exists) {
-        const request = requestSnap.data()
-        replyText = customerDetailsReply(request)
-        if (replyText) {
-          status = 'customer_details_released'
-          updates.push(requestRef.set({
-            externalMatchStatus: 'provider_interested',
-            matchedExternalProviderId: dispatch.providerId || provider?.id || null,
-            matchedExternalProviderName: dispatch.providerName || provider?.businessName || null,
-            externalLastReplyAt: receivedAt,
-            updatedAt: FieldValue.serverTimestamp(),
-          }, { merge: true }))
-        }
-      }
-    }
-
     updates.push(dispatch.ref.set({ status, replyType, replyText: text, repliedAt: receivedAt, updatedAt: FieldValue.serverTimestamp() }, { merge: true }))
+
+    if (dispatch.requestId && ['declined', 'stop'].includes(replyType)) {
+      updates.push(adminDb.collection('requests').doc(String(dispatch.requestId)).set({
+        externalLastReplyType: replyType,
+        externalLastReplyAt: receivedAt,
+        nextExternalDispatchAt: new Date(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true }))
+    }
   }
 
   if (updates.length) await Promise.all(updates)

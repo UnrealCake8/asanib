@@ -40,10 +40,10 @@ export default async function handler(req,res){
     }
     const providers=await rankProvidersForRequest(request,eligibleProviders)
     const requestRef=adminDb.collection('requests').doc();const batch=adminDb.batch()
-    batch.set(requestRef,{...request,locationData,customerId:user.uid,contactPhone,shareContactConsent:true,status:'open',matchCount:providers.length,externalMatchStatus:'needs_match',dispatchMode:request.urgency==='now'?'proximity':'coverage',createdAt:FieldValue.serverTimestamp()})
+    batch.set(requestRef,{...request,locationData,customerId:user.uid,contactPhone,shareContactConsent:true,status:'open',matchCount:providers.length,externalMatchStatus:'queued_for_auto_match',externalAutoDispatch:true,nextExternalDispatchAt:new Date(),dispatchMode:request.urgency==='now'?'proximity':'coverage',createdAt:FieldValue.serverTimestamp()})
     providers.forEach((provider,index)=>{const matchRef=adminDb.collection('providerMatches').doc(provider.id).collection('requests').doc(requestRef.id);batch.set(matchRef,{id:requestRef.id,requestId:requestRef.id,customerId:user.uid,...request,locationData,status:'open',routingRank:index+1,dispatchDistanceKm:provider.dispatchDistanceKm??null,matchedAt:FieldValue.serverTimestamp(),createdAt:FieldValue.serverTimestamp()})})
     await batch.commit()
     await Promise.allSettled(providers.flatMap((provider)=>[notifyUser(provider.id,request.urgency==='now'?'Urgent job near you':'New matching Asanib request',`${request.category} in ${request.location}${request.budget?` · up to AED ${request.budget}`:''}`,'/provider'),sendProviderRequestAlert(provider,request,requestRef.id)]))
-    return res.status(201).json({id:requestRef.id,matchCount:providers.length,location:locationData,category:request.category,routingSource:request.routingSource,dispatchMode:request.urgency==='now'?'proximity':'coverage'})
+    return res.status(201).json({id:requestRef.id,matchCount:providers.length,location:locationData,category:request.category,routingSource:request.routingSource,dispatchMode:request.urgency==='now'?'proximity':'coverage',externalAutoDispatch:true})
   }catch(error){return sendError(res,error)}
 }

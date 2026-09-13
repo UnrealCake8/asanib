@@ -6,6 +6,7 @@ import adminPayoutReview from '../server/api/admin-payout-review.js'
 import adminProviderReview from '../server/api/admin-provider-review.js'
 import cancelRequest from '../server/api/cancel-request.js'
 import createRequest from '../server/api/create-request.js'
+import externalDispatchPump from '../server/api/external-dispatch-pump.js'
 import kybUploadUrl from '../server/api/kyb-upload-url.js'
 import locationAutocomplete from '../server/api/location-autocomplete.js'
 import locationDetails from '../server/api/location-details.js'
@@ -29,6 +30,7 @@ const handlers = {
   'admin-provider-review': adminProviderReview,
   'cancel-request': cancelRequest,
   'create-request': createRequest,
+  'external-dispatch-pump': externalDispatchPump,
   'kyb-upload-url': kybUploadUrl,
   'location-autocomplete': locationAutocomplete,
   'location-details': locationDetails,
