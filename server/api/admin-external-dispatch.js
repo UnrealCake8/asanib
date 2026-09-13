@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireAdmin, sendError } from './_firebaseAdmin.js'
+import { sendGatewayMessage } from './_externalDispatch.js'
 
 function clean(value, max = 160) { return String(value || '').trim().slice(0, max) }
 function timingLabel(request) {
@@ -46,24 +47,50 @@ export default async function handler(req, res) {
     ].filter((line) => line !== null).join('\n')
 
     const dispatchRef = adminDb.collection('externalLeadDispatches').doc()
-    const batch = adminDb.batch()
-    batch.set(dispatchRef, {
+    await dispatchRef.set({
       requestId,
       providerId,
       providerName: provider.businessName || 'External provider',
-      providerWhatsapp: provider.whatsapp,
-      status: 'awaiting_reply',
+      providerWhatsapp: String(provider.whatsapp || '').replace(/\D/g, ''),
+      status: 'sending',
       preparedMessage: message,
+      automated: false,
       createdAt: FieldValue.serverTimestamp(),
-      sentAt: FieldValue.serverTimestamp(),
       createdBy: admin.uid,
+      updatedAt: FieldValue.serverTimestamp(),
     })
-    batch.set(providerRef, { lastContactedAt: FieldValue.serverTimestamp(), lastDispatchId: dispatchRef.id, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
-    batch.set(requestRef, { externalMatchStatus: 'provider_contacted', externalLastDispatchId: dispatchRef.id, externalLastProviderId: providerId, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
-    await batch.commit()
 
-    const digits = String(provider.whatsapp || '').replace(/\D/g, '')
-    return res.json({ ok: true, dispatchId: dispatchRef.id, message, whatsappUrl: `https://wa.me/${digits}?text=${encodeURIComponent(message)}` })
+    try {
+      const gatewayResult = await sendGatewayMessage(provider.whatsapp, message)
+      await Promise.all([
+        dispatchRef.set({
+          status: 'awaiting_reply',
+          sentAt: FieldValue.serverTimestamp(),
+          gatewayMessageId: gatewayResult.messageId || null,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true }),
+        providerRef.set({
+          lastContactedAt: FieldValue.serverTimestamp(),
+          lastDispatchId: dispatchRef.id,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true }),
+        requestRef.set({
+          externalMatchStatus: 'provider_contacted',
+          externalLastDispatchId: dispatchRef.id,
+          externalLastProviderId: providerId,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true }),
+      ])
+    } catch (error) {
+      await dispatchRef.set({
+        status: 'send_failed',
+        sendError: error instanceof Error ? error.message : String(error),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      throw error
+    }
+
+    return res.json({ ok: true, dispatchId: dispatchRef.id, message, sent: true })
   } catch (error) {
     return sendError(res, error)
   }
