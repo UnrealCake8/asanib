@@ -8,6 +8,7 @@ import { sendProviderRequestAlert } from './_whatsapp.js'
 const LIVE_LOCATION_MAX_AGE_MS = 10 * 60 * 1000
 const INITIAL_RADIUS_KM = 12
 function cleanText(value, max = 500) { return String(value || '').trim().slice(0, max) }
+function normalizePhone(value) { const digits = String(value || '').replace(/\D/g, ''); if (digits.length < 8 || digits.length > 15) return ''; return digits }
 function timestampMillis(value) { if (!value) return 0; if (typeof value.toMillis === 'function') return value.toMillis(); if (typeof value._seconds === 'number') return value._seconds * 1000; return 0 }
 function freshProviderLocation(provider) { const lat=Number(provider.currentLat), lng=Number(provider.currentLng), age=Date.now()-timestampMillis(provider.lastLocationAt); return provider.locationSharingEnabled && Number.isFinite(lat) && Number.isFinite(lng) && age >= 0 && age <= LIVE_LOCATION_MAX_AGE_MS ? { latitude:lat, longitude:lng } : null }
 function distanceKm(a,b){const rad=(x)=>x*Math.PI/180;const dLat=rad(b.latitude-a.latitude),dLng=rad(b.longitude-a.longitude);const s=Math.sin(dLat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dLng/2)**2;return 6371*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))}
@@ -17,6 +18,10 @@ export default async function handler(req,res){
   if(req.method!=='POST')return methodNotAllowed(res)
   try{
     const user=await requireUser(req)
+    const contactPhone=normalizePhone(req.body?.contactPhone)
+    const shareContactConsent=req.body?.shareContactConsent===true
+    if(!contactPhone)return res.status(400).json({error:'Enter a valid WhatsApp or mobile number in international format.'})
+    if(!shareContactConsent)return res.status(400).json({error:'You must allow Asanib to share your contact number with a matched business.'})
     const baseRequest={query:cleanText(req.body?.query,700),location:cleanText(req.body?.location,160),budget:req.body?.budget==null?null:Number(req.body.budget),urgency:cleanText(req.body?.urgency,20),scheduledFor:req.body?.scheduledFor?cleanText(req.body.scheduledFor,80):null}
     if(baseRequest.query.length<8||baseRequest.location.length<2)return res.status(400).json({error:'Describe the job and area.'})
     if(!['now','today','scheduled'].includes(baseRequest.urgency))return res.status(400).json({error:'Invalid urgency.'})
@@ -35,7 +40,7 @@ export default async function handler(req,res){
     }
     const providers=await rankProvidersForRequest(request,eligibleProviders)
     const requestRef=adminDb.collection('requests').doc();const batch=adminDb.batch()
-    batch.set(requestRef,{...request,locationData,customerId:user.uid,status:'open',matchCount:providers.length,dispatchMode:request.urgency==='now'?'proximity':'coverage',createdAt:FieldValue.serverTimestamp()})
+    batch.set(requestRef,{...request,locationData,customerId:user.uid,contactPhone,shareContactConsent:true,status:'open',matchCount:providers.length,externalMatchStatus:'needs_match',dispatchMode:request.urgency==='now'?'proximity':'coverage',createdAt:FieldValue.serverTimestamp()})
     providers.forEach((provider,index)=>{const matchRef=adminDb.collection('providerMatches').doc(provider.id).collection('requests').doc(requestRef.id);batch.set(matchRef,{id:requestRef.id,requestId:requestRef.id,customerId:user.uid,...request,locationData,status:'open',routingRank:index+1,dispatchDistanceKm:provider.dispatchDistanceKm??null,matchedAt:FieldValue.serverTimestamp(),createdAt:FieldValue.serverTimestamp()})})
     await batch.commit()
     await Promise.allSettled(providers.flatMap((provider)=>[notifyUser(provider.id,request.urgency==='now'?'Urgent job near you':'New matching Asanib request',`${request.category} in ${request.location}${request.budget?` · up to AED ${request.budget}`:''}`,'/provider'),sendProviderRequestAlert(provider,request,requestRef.id)]))
