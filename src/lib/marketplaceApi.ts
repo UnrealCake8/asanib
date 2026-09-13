@@ -183,5 +183,5 @@ export async function saveExternalProvider(input: {
 }
 
 export async function prepareExternalLead(requestId: string, providerId: string) {
-  return authenticatedPost<{ ok: true; dispatchId: string; message: string; whatsappUrl: string }>('/api/admin-external-dispatch', { requestId, providerId })
+  return authenticatedPost<{ ok: true; dispatchId: string; message: string; sent: true }>('/api/admin-external-dispatch', { requestId, providerId })
 }
