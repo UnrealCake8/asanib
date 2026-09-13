@@ -168,3 +168,20 @@ export async function openKybDocument(providerId: string, documentType: KybDocum
 export async function openTradeLicense(providerId: string) {
   return openKybDocument(providerId, 'trade_license')
 }
+
+export async function saveExternalProvider(input: {
+  providerId?: string
+  businessName: string
+  whatsapp: string
+  phone?: string
+  categories: string[]
+  areas: string[]
+  sourceUrl?: string
+  notes?: string
+}) {
+  return authenticatedPost<{ ok: true; providerId: string }>('/api/admin-external-provider', input)
+}
+
+export async function prepareExternalLead(requestId: string, providerId: string) {
+  return authenticatedPost<{ ok: true; dispatchId: string; message: string; whatsappUrl: string }>('/api/admin-external-dispatch', { requestId, providerId })
+}
