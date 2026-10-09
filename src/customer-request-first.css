@@ -446,3 +446,10 @@
 @media(prefers-reduced-motion:reduce){
   .service-launcher button{transition:none}
 }
+
+/* Focus the homepage on the request, with restrained editorial spacing. */
+.app-welcome h1{max-width:760px}
+.app-welcome p{max-width:560px}
+.app-request-card{box-shadow:none}
+.service-launcher button{box-shadow:none}
+@media(max-width:600px){.app-welcome h1{font-size:clamp(38px,10vw,46px)}}
