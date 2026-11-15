@@ -89,7 +89,10 @@ export default async function handler(req, res) {
 
     let kybStatus = String(existing?.kybStatus || 'not_started')
     let approved = existing?.approved === true
-    if (!kybComplete) {
+    if (existing?.kybApprovalMethod === 'manual' && approved && !kybCriticalChanged) {
+      // A manually approved provider may save unrelated profile changes without losing approval.
+      kybStatus = 'verified'
+    } else if (!kybComplete) {
       kybStatus = 'not_started'
       approved = false
     } else if (!existingSnap.exists || kybCriticalChanged || kybStatus === 'not_started' || kybStatus === 'rejected') {
@@ -116,6 +119,7 @@ export default async function handler(req, res) {
       emiratesIdFrontPath,
       emiratesIdBackPath,
       kybStatus,
+      kybApprovalMethod: kybCriticalChanged || !approved ? null : existing?.kybApprovalMethod || null,
       kybSubmittedAt: kybComplete && kybStatus === 'pending' ? FieldValue.serverTimestamp() : existing?.kybSubmittedAt || null,
       checkoutUrl,
       checkoutProvider,
