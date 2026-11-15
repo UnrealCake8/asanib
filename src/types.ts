@@ -107,6 +107,7 @@ export interface ProviderProfile {
   emiratesIdFrontPath?: string | null
   emiratesIdBackPath?: string | null
   kybStatus?: KybStatus
+  kybApprovalMethod?: 'documents' | 'manual' | null
   kybReviewNote?: string | null
   checkoutUrl?: string | null
   checkoutProvider?: string | null
