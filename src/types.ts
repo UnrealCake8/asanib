@@ -113,10 +113,6 @@ export interface ProviderProfile {
   checkoutHost?: string | null
   paymentLinkStatus?: PaymentLinkStatus
   paymentLinkReviewNote?: string | null
-  ziinaConnected?: boolean
-  ziinaAccountStatus?: string | null
-  ziinaDisplayName?: string | null
-  ziinaZiiname?: string | null
   createdAt?: unknown
   updatedAt?: unknown
 }
@@ -156,7 +152,6 @@ export interface Booking {
   paymentProcessor?: string | null
   paymentStatus?: string | null
   paymentAmountFils?: number | null
-  ziinaPaymentIntentId?: string | null
   paidAt?: unknown
   createdAt?: unknown
 }

@@ -1,0 +1,76 @@
+/* Hallmark · v2.0.0 · redesign: full · genre: editorial · theme: Loom · scope: legal and provider app · signature: shared routed-market mark */
+/* critique: every JSV Market surface should feel like one deliberate operating system, not a collection of inherited apps. */
+:root {
+  --pv3-bg: var(--color-paper);
+  --pv3-ink: var(--color-ink);
+  --pv3-muted: var(--color-muted);
+  --pv3-line: var(--color-rule);
+  --pv3-green: var(--color-accent);
+  --pv3-deep: var(--color-accent);
+  --pv3-soft: var(--color-paper-2);
+}
+
+.pv3-shell, .pv3-auth, .payout-page, .legal-shell { background: var(--color-paper); color: var(--color-ink); }
+.pv3-shell :is(a, button, input, textarea):focus-visible, .pv3-auth :is(a, button, input):focus-visible, .payout-page :is(a, button, input):focus-visible, .legal-shell a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: var(--space-2xs); }
+.pv3-shell :is(a, button):active, .pv3-auth :is(a, button):active, .payout-page :is(a, button):active, .legal-shell a:active { transform: translateY(1px); }
+.pv3-sidebar { border-inline-end: var(--rule-hair) solid var(--color-accent-rule); background: var(--color-accent); }
+.pv3-sidebar .jsv-wordmark { margin: 0 var(--space-xs) var(--space-lg); color: var(--color-accent-ink); }
+.pv3-sidebar .jsv-mark { fill: var(--color-paper); }
+.pv3-sidebar .jsv-mark .jsv-mark-signal { fill: var(--color-signal); }
+.pv3-sidebar .jsv-mark .jsv-mark-route { stroke: var(--color-accent); }
+.pv3-sidebar nav button, .pv3-side-bottom button, .pv3-side-bottom a { border-radius: 0; color: var(--color-accent-ink-muted); }
+.pv3-sidebar nav button.active { border-inline-start: var(--rule-heavy) solid var(--color-signal); background: color-mix(in oklab, var(--color-paper) 12%, transparent); color: var(--color-accent-ink); }
+.pv3-business > div { border-radius: 0; background: var(--color-paper); color: var(--color-accent); }
+.pv3-business small { color: var(--color-accent-ink-muted); }
+.pv3-auth { background: var(--color-paper); }
+.pv3-auth > .jsv-wordmark { align-self: flex-start; }
+.pv3-auth > section, .pv3-card, .pv3-stats article, .pv3-kyb-step, .pv3-doc-grid label, .pv3-jobs article, .pv3-verification-banner { border-radius: 0; box-shadow: none; background: var(--color-paper); }
+.pv3-auth > section, .pv3-card, .pv3-stats article { border-color: var(--color-rule-2); }
+.pv3-auth-tabs, .pv3-auth-tabs button, .pv3-fields input, .pv3-quote, .pv3-quote input, .pv3-quote textarea, .pv3-service-pills button, .pv3-availability { border-radius: 0; }
+.pv3-auth-tabs { background: var(--color-paper-2); }
+.pv3-auth-tabs button { font-size: var(--text-sm); white-space: nowrap; }
+.pv3-auth-tabs button.active { box-shadow: none; background: var(--color-paper); }
+.pv3-auth input { border-color: var(--color-rule-2); background: var(--color-paper); }
+.pv3-header > div > span, .pv3-card-title span, .pv3-section-head span, .pv3-doc-head span { color: var(--color-accent); }
+.pv3-kyb-hero { background: var(--color-accent); }
+.pv3-kyb-hero > div > span { color: var(--color-signal); }
+.pv3-kyb-hero p { color: var(--color-accent-ink-muted); }
+.pv3-shell .primary, .pv3-auth .primary, .payout-page .primary { border-color: var(--color-accent); border-radius: 0; background: var(--color-accent); color: var(--color-accent-ink); }
+.pv3-auth .primary { min-height: 48px; padding-block: var(--space-sm); }
+.pv3-mobile-nav { border: var(--rule-hair) solid var(--color-accent-rule); border-radius: 0; background: var(--color-accent); box-shadow: none; }
+.pv3-mobile-nav button, .pv3-mobile-nav button.active { border-radius: 0; }
+.pv3-mobile-nav button.active { background: var(--color-paper); color: var(--color-accent); }
+.pv3-header-actions { display: flex; align-items: center; gap: var(--space-sm); }
+.pv3-payouts-link { min-height: 44px; padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-rule-2); color: var(--color-accent); font-weight: 700; text-decoration: none; }
+
+.payout-header { border-color: var(--color-rule-2); background: var(--color-paper); backdrop-filter: none; }
+.payout-header .jsv-wordmark { justify-self: center; }
+.payout-hero { border-color: var(--color-rule-2); border-radius: 0; background: var(--color-paper-2); box-shadow: none; }
+.payout-hero > div:first-child > span, .payout-card-head span { color: var(--color-accent); }
+.payout-available { border-radius: 0; background: var(--color-accent); color: var(--color-accent-ink); }
+.payout-stats article, .payout-card, .payout-methods button, .payout-fields input, .payout-proof, .payout-note, .payout-history article { border-radius: 0; box-shadow: none; }
+.payout-stats article, .payout-card { border-color: var(--color-rule-2); background: var(--color-paper); }
+.payout-methods button.active { border-color: var(--color-accent); background: var(--color-paper-2); box-shadow: none; }
+
+.legal-shell { min-height: 100dvh; }
+.legal-topbar { width: 100%; max-width: var(--container); min-height: var(--space-2xl); height: auto; padding-inline: var(--gutter); border-color: var(--color-rule-2); }
+.legal-topbar > a:last-child { color: var(--color-ink-2); font-weight: 600; text-decoration: none; }
+.legal-document { width: min(880px, calc(100% - (2 * var(--gutter)))); margin: var(--space-3xl) auto; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.legal-heading { margin-block-end: var(--space-2xl); padding-block-end: var(--space-2xl); border-color: var(--color-rule-2); }
+.legal-heading > span { color: var(--color-accent); font-family: var(--font-body); }
+.legal-heading h1 { max-width: none; margin: var(--space-sm) 0 var(--space-lg); font-size: var(--text-display-s); font-weight: 400; }
+.legal-heading > p { color: var(--color-ink-2); font-size: var(--text-lead); }
+.operator-note { margin-block-start: var(--space-lg); padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-rule-2); border-radius: 0; background: var(--color-paper-2); }
+.legal-document section { margin: 0; padding: var(--space-xl) 0; border-block-end: var(--rule-hair) solid var(--color-rule); }
+.legal-document h2 { margin-block-end: var(--space-md); font-size: var(--text-title); font-weight: 400; }
+.legal-document p { color: var(--color-ink-2); }
+.legal-document p + p { margin-block-start: var(--space-md); }
+.legal-footer { width: 100%; max-width: var(--container); padding: var(--space-xl) var(--gutter) var(--space-2xl); border-color: var(--color-rule-2); color: var(--color-ink-2); }
+.legal-footer .jsv-wordmark { font-size: var(--text-md); }
+.legal-footer nav a { font-weight: 600; text-decoration: none; }
+
+@media (max-width: 40rem) {
+  .legal-document { width: calc(100% - (2 * var(--gutter))); margin-block: var(--space-2xl); }
+  .legal-footer { align-items: flex-start; }
+  .payout-header .jsv-wordmark span { display: none; }
+}

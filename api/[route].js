@@ -10,6 +10,9 @@ import externalDispatchPump from '../server/api/external-dispatch-pump.js'
 import kybUploadUrl from '../server/api/kyb-upload-url.js'
 import locationAutocomplete from '../server/api/location-autocomplete.js'
 import locationDetails from '../server/api/location-details.js'
+import networkCheckout from '../server/api/network-checkout.js'
+import networkPaymentStatus from '../server/api/network-payment-status.js'
+import networkWebhook from '../server/api/network-webhook.js'
 import payoutUploadUrl from '../server/api/payout-upload-url.js'
 import providerPayoutSummary from '../server/api/provider-payout-summary.js'
 import registerPush from '../server/api/register-push.js'
@@ -17,9 +20,6 @@ import requestPayout from '../server/api/request-payout.js'
 import submitQuote from '../server/api/submit-quote.js'
 import updateBooking from '../server/api/update-booking.js'
 import updateProviderProfile from '../server/api/update-provider-profile.js'
-import ziinaCheckout from '../server/api/ziina-checkout.js'
-import ziinaPaymentStatus from '../server/api/ziina-payment-status.js'
-import ziinaWebhook from '../server/api/ziina-webhook.js'
 
 const handlers = {
   'accept-quote': acceptQuote,
@@ -34,6 +34,9 @@ const handlers = {
   'kyb-upload-url': kybUploadUrl,
   'location-autocomplete': locationAutocomplete,
   'location-details': locationDetails,
+  'network-checkout': networkCheckout,
+  'network-payment-status': networkPaymentStatus,
+  'network-webhook': networkWebhook,
   'payout-upload-url': payoutUploadUrl,
   'provider-payout-summary': providerPayoutSummary,
   'register-push': registerPush,
@@ -41,9 +44,6 @@ const handlers = {
   'submit-quote': submitQuote,
   'update-booking': updateBooking,
   'update-provider-profile': updateProviderProfile,
-  'ziina-checkout': ziinaCheckout,
-  'ziina-payment-status': ziinaPaymentStatus,
-  'ziina-webhook': ziinaWebhook,
 }
 
 export default async function handler(req, res) {

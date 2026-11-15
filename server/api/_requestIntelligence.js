@@ -43,7 +43,7 @@ async function callOpenAI(input, schemaName, schema) {
     body: JSON.stringify({
       model,
       reasoning: { effort: 'none' },
-      instructions: 'You are Asanib request routing. Return only the requested structured data. Never invent a location, budget, provider capability, or availability. Choose the closest category from the allowed list.',
+      instructions: 'You are JSV Market request routing. Return only the requested structured data. Never invent a location, budget, provider capability, or availability. Choose the closest category from the allowed list.',
       input: JSON.stringify(input),
       text: {
         format: {
@@ -76,7 +76,7 @@ export async function classifyServiceRequest(request) {
         scheduledFor: clean(request.scheduledFor, 80) || null,
         budget: request.budget ?? null,
       },
-    }, 'asanib_request_classification', {
+    }, 'jsv_market_request_classification', {
       type: 'object',
       additionalProperties: false,
       properties: {
@@ -95,7 +95,7 @@ export async function classifyServiceRequest(request) {
       source: 'llm',
     }
   } catch (error) {
-    console.warn('Asanib LLM classification fallback:', error instanceof Error ? error.message : error)
+    console.warn('JSV Market LLM classification fallback:', error instanceof Error ? error.message : error)
     return fallback
   }
 }
@@ -119,7 +119,7 @@ export async function rankProvidersForRequest(request, providers) {
         areas: Array.isArray(provider.areas) ? provider.areas.slice(0, 30) : [],
         availableNow: provider.availableNow === true,
       })),
-    }, 'asanib_provider_ranking', {
+    }, 'jsv_market_provider_ranking', {
       type: 'object',
       additionalProperties: false,
       properties: {
@@ -142,7 +142,7 @@ export async function rankProvidersForRequest(request, providers) {
     }
     return [...ranked, ...byId.values(), ...providers.slice(30)]
   } catch (error) {
-    console.warn('Asanib LLM provider ranking fallback:', error instanceof Error ? error.message : error)
+    console.warn('JSV Market LLM provider ranking fallback:', error instanceof Error ? error.message : error)
     return providers
   }
 }

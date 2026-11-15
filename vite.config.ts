@@ -12,9 +12,9 @@ export default defineConfig({
       filename: 'sw.ts',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Asanib',
-        short_name: 'Asanib',
-        description: 'Tell Asanib what you need. Find someone who can do it.',
+        name: 'JSV Market',
+        short_name: 'JSV Market',
+        description: 'Tell JSV Market what you need. Find someone who can do it.',
         theme_color: '#126b5c',
         background_color: '#f7f8f4',
         display: 'standalone',

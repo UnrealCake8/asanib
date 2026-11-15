@@ -83,11 +83,11 @@ function timingLabel(request) {
 }
 
 function leadMessage(provider, request) {
-  const greeting = provider.businessName ? `Hi ${provider.businessName}, I'm from Asanib.` : `Hi, I'm from Asanib.`
+  const greeting = provider.businessName ? `Hi ${provider.businessName}, I'm from JSV Market.` : `Hi, I'm from JSV Market.`
   return [
     greeting,
     '',
-    'You are opted in to receive free Asanib customer leads.',
+    'You are opted in to receive free JSV Market customer leads.',
     '',
     `A customer in ${request.location} is looking for help with:`,
     request.query,
@@ -96,8 +96,8 @@ function leadMessage(provider, request) {
     '',
     'There is no fee or commission. You deal with the customer directly and keep 100% of what they pay.',
     '',
-    'Reply YES if you can help. Asanib will then send the customer contact details automatically.',
-    'Reply NO if you cannot take this job, or STOP to stop future Asanib leads.',
+    'Reply YES if you can help. JSV Market will then send the customer contact details automatically.',
+    'Reply NO if you cannot take this job, or STOP to stop future JSV Market leads.',
   ].filter((line) => line !== null).join('\n')
 }
 

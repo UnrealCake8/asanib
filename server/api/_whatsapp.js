@@ -19,7 +19,7 @@ export async function sendProviderRequestAlert(provider, request, requestId) {
       ? 'Needed today'
       : request.scheduledFor || 'Scheduled'
 
-  const appUrl = String(process.env.ASANIB_APP_URL || 'https://asanib-1.vercel.app').replace(/\/$/, '')
+  const appUrl = String(process.env.JSV_MARKET_APP_URL || 'https://market.jsventures.me').replace(/\/$/, '')
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 5000)
 

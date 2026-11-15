@@ -9,8 +9,8 @@ function safeEqual(a, b) {
 }
 
 function requireSecret(req) {
-  const expected = String(process.env.ASANIB_WEBHOOK_SECRET || '').trim()
-  if (!expected) throw Object.assign(new Error('ASANIB_WEBHOOK_SECRET is not configured.'), { statusCode: 503 })
+  const expected = String(process.env.JSV_MARKET_WEBHOOK_SECRET || '').trim()
+  if (!expected) throw Object.assign(new Error('JSV_MARKET_WEBHOOK_SECRET is not configured.'), { statusCode: 503 })
   const header = String(req.headers.authorization || '')
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
   if (!token || !safeEqual(token, expected)) throw Object.assign(new Error('Unauthorized.'), { statusCode: 401 })

@@ -27,8 +27,8 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId) {
   const messaging = getMessaging(app)
 
   onBackgroundMessage(messaging, (payload) => {
-    const title = payload.data?.title || 'Asanib'
-    const body = payload.data?.body || 'You have an update on Asanib.'
+    const title = payload.data?.title || 'JSV Market'
+    const body = payload.data?.body || 'You have an update on JSV Market.'
     const link = payload.data?.link || '/'
 
     self.registration.showNotification(title, {

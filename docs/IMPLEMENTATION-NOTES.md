@@ -1,17 +1,9 @@
-# Implementation notes
+# JSV Market implementation notes
 
-## External provider checkout
+Provider approval uses a lightweight KYB workflow. Businesses submit legal and trade-licence details plus private verification documents. Administrative verification controls whether an account can quote.
 
-Provider checkout links are validated server-side and must use HTTPS. Localhost and private-network destinations are rejected. New or changed checkout links enter `pending_review`; only `approved` links are copied onto a quote. The checkout URL is then snapshotted again onto the accepted booking so later provider profile changes cannot silently alter an already accepted customer's payment destination.
+Customers post one request with the job, location, timing and optional budget. Matching considers service category and area before businesses can reply.
 
-## Business verification
+Customer and provider experiences use dedicated responsive shells. The shared journey remains request → replies → quote acceptance → booking.
 
-Provider approval is now tied to a lightweight Asanib KYB workflow. The provider supplies business and trade-licence details and uploads a PDF/image to private Firebase Storage. A successful admin verification sets `kybStatus=verified` and `approved=true`, which preserves the existing server-side quote protection.
-
-## Location matching
-
-Requests are geocoded server-side when Google Maps Platform is configured. Matching compares the provider's service-area strings with structured request area/city/emirate data. The text fallback remains available if the API is temporarily unavailable or the key has not yet been configured.
-
-## Mobile PWA
-
-The customer and provider experiences now have dedicated mobile app shells and bottom navigation rather than simply compressing desktop navigation. The goal is one consistent Asanib journey across different service categories, while keeping the request -> quote -> booking flow the same.
+Approved external provider checkout links may be shown after booking. JSV Market platform checkout uses Network International’s hosted payment page and keeps card data outside the application. Webhooks require the configured `X-JSV-Market-Webhook-Token` header and are stored idempotently by event ID.

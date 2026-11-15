@@ -87,7 +87,7 @@ function CustomerAccount({ user }: { user: User | null }) {
     try {
       if (mode === 'create') {
         await customerCreateAccount(email.trim(), password)
-        setMessage('Account saved. Your current Asanib history stays with you.')
+        setMessage('Account saved. Your current JSV Market history stays with you.')
       } else {
         await customerSignIn(email.trim(), password)
         setMessage('Signed in.')
@@ -104,7 +104,7 @@ function CustomerAccount({ user }: { user: User | null }) {
     <button className="account-trigger" type="button" onClick={() => setOpen((value) => !value)}>{member ? user?.email || 'Your account' : 'Customer sign in'}</button>
     {open && <div className="account-popover">
       {member ? <div className="member-box"><span>Signed in as</span><strong>{user?.email}</strong><button className="secondary small" type="button" onClick={logOut}>Sign out</button></div> : <>
-        <h3>{mode === 'create' ? 'Save your Asanib' : 'Welcome back'}</h3>
+        <h3>{mode === 'create' ? 'Save your JSV Market' : 'Welcome back'}</h3>
         <p>{mode === 'create' ? 'Create an account so your requests and bookings are not tied only to this browser.' : 'Sign in to an existing customer account.'}</p>
         <div className="account-tabs"><button type="button" className={mode === 'create' ? 'active' : ''} onClick={() => setMode('create')}>Create account</button><button type="button" className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>Sign in</button></div>
         {error && <div className="account-error">{error}</div>}
@@ -211,7 +211,7 @@ function CustomerHome() {
   return (
     <main className="page customer-home">
       <header className="topbar home-topbar">
-        <a className="brand" href="/">asanib<span>.</span></a>
+        <a className="brand" href="/">JSV Market<span>.</span></a>
         <nav className="home-nav"><a href="#services">Services</a><a href="#how-it-works">How it works</a><a href="/provider">For providers</a></nav>
         <div className="home-account-actions"><CustomerAccount user={user} /><a className="provider-pill" href="/provider">List your business</a></div>
       </header>
@@ -243,7 +243,7 @@ function CustomerHome() {
           </div>
           {urgency === 'scheduled' && <div className="inline-field"><label>When?</label><input type="datetime-local" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} required /></div>}
           <button className="primary request-submit" disabled={!canSubmit || saving}>{saving ? 'Posting request…' : 'Find providers'}</button>
-          <p className="form-fineprint">Your request is only shared with authenticated provider accounts that can respond to jobs on Asanib.</p>
+          <p className="form-fineprint">Your request is only shared with authenticated provider accounts that can respond to jobs on JSV Market.</p>
         </form>
 
         <div className="example-strip"><span>Popular requests:</span>{examples.map((example) => <button key={example} onClick={() => jumpToRequest(example)}>{example}</button>)}</div>
@@ -252,7 +252,7 @@ function CustomerHome() {
       {user?.isAnonymous && (requests.length > 0 || bookings.length > 0) && <div className="save-history-card"><div><strong>Keep your requests if you change device.</strong><p>You are currently using a guest account. Create a customer account from “Customer sign in” above to keep this history with the same Firebase user.</p></div><button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Save my history</button></div>}
 
       {(requests.length > 0 || bookings.length > 0) && <section className="account-snapshot">
-        <div className="snapshot-copy"><span className="eyebrow">YOUR ASANIB</span><h2>Pick up where you left off.</h2><p>{user && !user.isAnonymous ? 'Your account keeps your requests and bookings attached to you.' : 'Your active requests and bookings are currently attached to this guest session.'}</p></div>
+        <div className="snapshot-copy"><span className="eyebrow">YOUR JSV MARKET</span><h2>Pick up where you left off.</h2><p>{user && !user.isAnonymous ? 'Your account keeps your requests and bookings attached to you.' : 'Your active requests and bookings are currently attached to this guest session.'}</p></div>
         <div className="snapshot-stats"><div><strong>{openCount}</strong><span>Open requests</span></div><div><strong>{activeBookings}</strong><span>Active bookings</span></div><div><strong>{bookings.length}</strong><span>Total bookings</span></div></div>
       </section>}
 
@@ -275,12 +275,12 @@ function CustomerHome() {
       </section>
 
       <section id="how-it-works" className="home-section how-section">
-        <div className="section-intro"><div><span className="eyebrow">HOW ASANIB WORKS</span><h2>Less searching. More getting it done.</h2></div><p>Asanib is built around a request, not a directory. You tell us the outcome you need; suitable providers decide whether to quote.</p></div>
-        <div className="steps-grid"><article><span>01</span><h3>Describe the job</h3><p>Tell us what you need, where you need it, your timing and an optional maximum budget.</p></article><article><span>02</span><h3>Receive quotes</h3><p>Approved providers can respond with their price, ETA and what is included.</p></article><article><span>03</span><h3>Choose who fits</h3><p>Compare your options and accept the quote you want. Asanib creates the booking.</p></article><article><span>04</span><h3>Get it done</h3><p>Contact the accepted provider directly, follow booking progress and review the completed job.</p></article></div>
+        <div className="section-intro"><div><span className="eyebrow">HOW JSV MARKET WORKS</span><h2>Less searching. More getting it done.</h2></div><p>JSV Market is built around a request, not a directory. You tell us the outcome you need; suitable providers decide whether to quote.</p></div>
+        <div className="steps-grid"><article><span>01</span><h3>Describe the job</h3><p>Tell us what you need, where you need it, your timing and an optional maximum budget.</p></article><article><span>02</span><h3>Receive quotes</h3><p>Approved providers can respond with their price, ETA and what is included.</p></article><article><span>03</span><h3>Choose who fits</h3><p>Compare your options and accept the quote you want. JSV Market creates the booking.</p></article><article><span>04</span><h3>Get it done</h3><p>Contact the accepted provider directly, follow booking progress and review the completed job.</p></article></div>
       </section>
 
       <section className="home-section confidence-section">
-        <div className="confidence-main"><span className="eyebrow">BUILT FOR REAL-WORLD SERVICES</span><h2>Useful first. Flashy second.</h2><p>Asanib is not a list of random businesses dressed up as an AI answer. Provider accounts require approval before they can quote. Customers choose the quote; providers choose the jobs they want.</p><div className="confidence-points"><span>Provider approval controls</span><span>Quote-first marketplace</span><span>Persistent customer accounts</span><span>Direct provider contact after booking</span><span>Completed-job reviews</span></div></div>
+        <div className="confidence-main"><span className="eyebrow">BUILT FOR REAL-WORLD SERVICES</span><h2>Useful first. Flashy second.</h2><p>JSV Market is not a list of random businesses dressed up as an AI answer. Provider accounts require approval before they can quote. Customers choose the quote; providers choose the jobs they want.</p><div className="confidence-points"><span>Provider approval controls</span><span>Quote-first marketplace</span><span>Persistent customer accounts</span><span>Direct provider contact after booking</span><span>Completed-job reviews</span></div></div>
         <aside className="need-now-card"><div className="pulse-dot" /><span>Need it now?</span><strong>Mark a request urgent.</strong><p>Providers who cover your category and service area can see the open job and respond with an ETA.</p><button onClick={() => { setUrgency('now'); jumpToRequest('I need someone who can help me right now with') }}>Post an urgent request</button></aside>
       </section>
 
@@ -288,7 +288,7 @@ function CustomerHome() {
         <div><span className="eyebrow">FOR LOCAL BUSINESSES</span><h2>Stop chasing every lead. Quote the jobs that fit.</h2><p>Create your service profile, choose the categories and areas you cover, and respond only when a request makes sense for your business.</p></div><a href="/provider">Join as a provider →</a>
       </section>
 
-      <footer className="home-footer"><a className="brand" href="/">asanib<span>.</span></a><p>Everyday local help, made easier.</p><nav><a href="/provider">Provider portal</a><a href="/admin">Admin</a><a href="#services">Services</a></nav></footer>
+      <footer className="home-footer"><a className="brand" href="/">JSV Market<span>.</span></a><p>Everyday local help, made easier.</p><nav><a href="/provider">Provider portal</a><a href="/admin">Admin</a><a href="#services">Services</a></nav></footer>
     </main>
   )
 }
@@ -323,10 +323,10 @@ function RequestPage({ requestId }: { requestId: string }) {
 
   if (!firebaseConfigured) return <main className="page"><ErrorBox message="Firebase is not configured." /></main>
   if (!ready) return <main className="page"><p>Loading…</p></main>
-  if (!user) return <main className="page"><ErrorBox message="This request belongs to a browser session that is no longer signed in. Sign in from the Asanib homepage if you created a customer account." /></main>
+  if (!user) return <main className="page"><ErrorBox message="This request belongs to a browser session that is no longer signed in. Sign in from the JSV Market homepage if you created a customer account." /></main>
 
   return <main className="page">
-    <header className="topbar"><a className="back-link" href="/">← Requests</a><a className="brand" href="/">asanib<span>.</span></a><span /></header>
+    <header className="topbar"><a className="back-link" href="/">← Requests</a><a className="brand" href="/">JSV Market<span>.</span></a><span /></header>
     <section className="request-detail">
       {!request ? <p>Loading request…</p> : <>
         <div className="request-title-row"><div><div className="eyebrow">{request.urgency === 'now' ? 'NEED IT NOW' : 'SERVICE REQUEST'}</div><h1>{request.query}</h1></div><span className={`status large ${request.status}`}>{request.status}</span></div>
@@ -353,7 +353,7 @@ function ProviderAuth({ onDone }: { onDone?: () => void }) {
     try { mode === 'signin' ? await providerSignIn(email, password) : await providerSignUp(email, password); onDone?.() } catch (err) { setError(err instanceof Error ? err.message : 'Authentication failed.') }
     setBusy(false)
   }
-  return <div className="auth-card"><h2>{mode === 'signin' ? 'Provider sign in' : 'Create provider account'}</h2><p>Use email and password. Provider profiles still require Asanib approval before they can quote.</p>{error && <ErrorBox message={error} />}<form onSubmit={submit}><label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label>Password<input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></label><button className="primary" disabled={busy}>{busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create account'}</button></form><button className="text-button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? 'Need an account? Sign up' : 'Already registered? Sign in'}</button></div>
+  return <div className="auth-card"><h2>{mode === 'signin' ? 'Provider sign in' : 'Create provider account'}</h2><p>Use email and password. Provider profiles still require JSV Market approval before they can quote.</p>{error && <ErrorBox message={error} />}<form onSubmit={submit}><label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label>Password<input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></label><button className="primary" disabled={busy}>{busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create account'}</button></form><button className="text-button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? 'Need an account? Sign up' : 'Already registered? Sign in'}</button></div>
 }
 
 function ProviderOnboarding({ user }: { user: User }) {
@@ -404,7 +404,7 @@ function ProviderDashboard({ user, profile }: { user: User; profile: ProviderPro
   async function toggleAvailability() { setAvailabilityBusy(true); await setProviderAvailability(user.uid, !profile.availableNow); setAvailabilityBusy(false) }
   return <>
     <section className="provider-summary"><div><div className="eyebrow">PROVIDER DASHBOARD</div><h1>{profile.businessName}</h1><p>{profile.areas.join(' · ')} · {profile.categories.join(' · ')}</p></div><div className="provider-controls"><span className={`approval ${profile.approved ? 'approved' : 'pending'}`}>{profile.approved ? 'Approved' : 'Awaiting approval'}</span><button className={profile.availableNow ? 'availability on' : 'availability'} disabled={availabilityBusy} onClick={toggleAvailability}>{profile.availableNow ? '● Available now' : '○ Not available now'}</button><button className="text-button" onClick={logOut}>Sign out</button></div></section>
-    {!profile.approved && <div className="notice">Your profile is saved. An Asanib admin must approve it before customer requests are visible.</div>}
+    {!profile.approved && <div className="notice">Your profile is saved. An JSV Market admin must approve it before customer requests are visible.</div>}
     {profile.approved && <section className="dashboard-section"><div className="section-heading"><h2>Matching open requests</h2><span>{matches.length}</span></div>{matches.length === 0 ? <div className="empty-state"><strong>No matching requests right now.</strong><p>Matching uses your selected service categories and service areas.</p></div> : <div className="provider-request-grid">{matches.map((request) => <article className="provider-request" key={request.id}><div className="demo-head"><span>{request.category}</span><b>{request.urgency.toUpperCase()}</b></div><h3>{request.query}</h3><p>{request.location}{request.budget ? ` · budget up to AED ${request.budget}` : ' · open budget'}</p><QuoteForm request={request} provider={profile} /></article>)}</div>}</section>}
     <section className="dashboard-section"><div className="section-heading"><h2>Your quotes</h2><span>{quotes.length}</span></div><div className="list-stack">{quotes.length === 0 ? <div className="empty-state">No quotes sent yet.</div> : quotes.map((quote) => <div className="list-card" key={quote.id}><div><strong>AED {quote.amount}</strong><p>Request {quote.requestId.slice(0, 7)} · {quote.providerName}</p></div><span className={`status ${quote.status}`}>{quote.status}</span></div>)}</div></section>
     <section className="dashboard-section"><div className="section-heading"><h2>Booked jobs</h2><span>{bookings.length}</span></div><div className="list-stack">{bookings.length === 0 ? <div className="empty-state">No bookings yet.</div> : bookings.map((booking) => <div className="job-card" key={booking.id}><div><strong>Booking {booking.id.slice(0, 7)}</strong><p>AED {booking.amount} · request {booking.requestId.slice(0, 7)}</p></div><select value={booking.status} onChange={(e) => updateBookingStatus(booking.id, e.target.value as Booking['status'])}><option value="booked">Booked</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>)}</div></section>
@@ -415,7 +415,7 @@ function ProviderPortal() {
   const { user, ready } = useCurrentUser()
   const [profile, setProfile] = useState<ProviderProfile | null>(null)
   useEffect(() => { if (!user || user.isAnonymous || !firebaseConfigured) { setProfile(null); return }; return watchProviderProfile(user.uid, setProfile) }, [user])
-  return <main className="page"><header className="topbar"><a className="brand" href="/">asanib<span>.</span></a><a className="provider-link" href="/">Customer app</a></header>{!firebaseConfigured ? <ErrorBox message="Firebase must be configured before provider accounts can work." /> : !ready ? <p>Loading…</p> : !user || user.isAnonymous ? <ProviderAuth /> : !profile ? <ProviderOnboarding user={user} /> : <ProviderDashboard user={user} profile={profile} />}</main>
+  return <main className="page"><header className="topbar"><a className="brand" href="/">JSV Market<span>.</span></a><a className="provider-link" href="/">Customer app</a></header>{!firebaseConfigured ? <ErrorBox message="Firebase must be configured before provider accounts can work." /> : !ready ? <p>Loading…</p> : !user || user.isAnonymous ? <ProviderAuth /> : !profile ? <ProviderOnboarding user={user} /> : <ProviderDashboard user={user} profile={profile} />}</main>
 }
 
 function AdminPanel() {
@@ -428,10 +428,10 @@ function AdminPanel() {
   useEffect(() => { if (!allowed) return; const a = watchAllProviders(setProviders); const b = watchAllRequests(setRequests); return () => { a(); b() } }, [allowed])
   if (!firebaseConfigured) return <main className="page"><ErrorBox message="Firebase is not configured." /></main>
   if (!ready) return <main className="page"><p>Loading…</p></main>
-  if (!user || user.isAnonymous) return <main className="page"><header className="topbar"><a className="brand" href="/">asanib<span>.</span></a></header><ProviderAuth /></main>
+  if (!user || user.isAnonymous) return <main className="page"><header className="topbar"><a className="brand" href="/">JSV Market<span>.</span></a></header><ProviderAuth /></main>
   if (!checked) return <main className="page"><p>Checking admin access…</p></main>
-  if (!allowed) return <main className="page"><header className="topbar"><a className="brand" href="/">asanib<span>.</span></a></header><ErrorBox message="This account is not an Asanib admin. Add its UID as a document ID in the admins collection to bootstrap admin access." /><button className="text-button" onClick={logOut}>Sign out</button></main>
-  return <main className="page"><header className="topbar"><a className="brand" href="/">asanib<span>.</span></a><button className="text-button" onClick={logOut}>Sign out</button></header><section className="admin-header"><div className="eyebrow">ASANIB ADMIN</div><h1>Operations</h1><p>Approve providers and inspect live customer demand.</p></section><section className="dashboard-section"><div className="section-heading"><h2>Providers</h2><span>{providers.length}</span></div><div className="list-stack">{providers.map((provider) => <div className="admin-provider" key={provider.id}><div><strong>{provider.businessName}</strong><p>{provider.phone} · {provider.areas.join(', ')} · {provider.categories.join(', ')}</p></div><button className={provider.approved ? 'secondary small' : 'primary small'} onClick={() => setProviderApproved(provider.id, !provider.approved)}>{provider.approved ? 'Revoke approval' : 'Approve'}</button></div>)}</div></section><section className="dashboard-section"><div className="section-heading"><h2>Requests</h2><span>{requests.length}</span></div><div className="list-stack">{requests.map((request) => <div className="list-card" key={request.id}><div><strong>{request.query}</strong><p>{request.location} · {request.category}</p></div><span className={`status ${request.status}`}>{request.status}</span></div>)}</div></section></main>
+  if (!allowed) return <main className="page"><header className="topbar"><a className="brand" href="/">JSV Market<span>.</span></a></header><ErrorBox message="This account is not an JSV Market admin. Add its UID as a document ID in the admins collection to bootstrap admin access." /><button className="text-button" onClick={logOut}>Sign out</button></main>
+  return <main className="page"><header className="topbar"><a className="brand" href="/">JSV Market<span>.</span></a><button className="text-button" onClick={logOut}>Sign out</button></header><section className="admin-header"><div className="eyebrow">JSV MARKET ADMIN</div><h1>Operations</h1><p>Approve providers and inspect live customer demand.</p></section><section className="dashboard-section"><div className="section-heading"><h2>Providers</h2><span>{providers.length}</span></div><div className="list-stack">{providers.map((provider) => <div className="admin-provider" key={provider.id}><div><strong>{provider.businessName}</strong><p>{provider.phone} · {provider.areas.join(', ')} · {provider.categories.join(', ')}</p></div><button className={provider.approved ? 'secondary small' : 'primary small'} onClick={() => setProviderApproved(provider.id, !provider.approved)}>{provider.approved ? 'Revoke approval' : 'Approve'}</button></div>)}</div></section><section className="dashboard-section"><div className="section-heading"><h2>Requests</h2><span>{requests.length}</span></div><div className="list-stack">{requests.map((request) => <div className="list-card" key={request.id}><div><strong>{request.query}</strong><p>{request.location} · {request.category}</p></div><span className={`status ${request.status}`}>{request.status}</span></div>)}</div></section></main>
 }
 
 export default function App() {

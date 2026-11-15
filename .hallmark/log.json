@@ -1,0 +1,59 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "site",
+  "shape": "Counter to ruled index",
+  "theme": "loom",
+  "axes": [
+   "stage hero",
+   "form counter",
+   "ruled rows",
+   "indigo band"
+  ],
+  "hero": "Stage with functional request-routing diagram",
+  "nav": "edge rail",
+  "footer": "operator colophon",
+  "imagery": "functional SVG diagrams",
+  "photos": [],
+  "entry": "JSV Market full migration",
+  "fingerprint": "stage|form|rows|band|edge-rail|colophon",
+  "sections": [
+   "Stage",
+   "Form",
+   "Rows",
+   "Index",
+   "Provider close"
+  ],
+  "signature": "request-routing diagram",
+  "waived": [],
+  "prompt": "JSV Market local-services marketplace redesign with SVGs and no legacy brand",
+  "review": "finish fix, 4 resolved",
+  "date": "2026-11-15"
+ },
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "page",
+  "shape": "Feature Stack",
+  "theme": "editorial",
+  "axes": "light/display-condensed/chromatic-green",
+  "hero": "Counter",
+  "nav": "compact masthead",
+  "footer": "operator colophon",
+  "imagery": "the working product",
+  "photos": [],
+  "entry": "JSV Market public homepage redesign",
+  "fingerprint": "counter|masthead|ruled-process|request-index|colophon|product-form",
+  "sections": [
+   "Counter",
+   "Ruled process",
+   "Request index",
+   "Colophon"
+  ],
+  "signature": "the live request form as a ruled service order",
+  "waived": [],
+  "prompt": "UAE customers describe a local service job and send one request to relevant nearby providers",
+  "date": "2026-11-15"
+ }
+]

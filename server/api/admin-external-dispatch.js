@@ -23,10 +23,10 @@ export default async function handler(req, res) {
     if (!requestSnap.exists || !providerSnap.exists) return res.status(404).json({ error: 'Request or provider not found.' })
     const request = { id: requestSnap.id, ...requestSnap.data() }
     const provider = { id: providerSnap.id, ...providerSnap.data() }
-    if (provider.leadOptIn === false) return res.status(409).json({ error: 'This business has opted out of Asanib messages.' })
+    if (provider.leadOptIn === false) return res.status(409).json({ error: 'This business has opted out of JSV Market messages.' })
     if (request.status !== 'open') return res.status(409).json({ error: 'Only open requests can be matched.' })
 
-    const greeting = provider.businessName ? `Hi ${provider.businessName}, I'm from Asanib.` : `Hi, I'm from Asanib.`
+    const greeting = provider.businessName ? `Hi ${provider.businessName}, I'm from JSV Market.` : `Hi, I'm from JSV Market.`
     const message = [
       greeting,
       '',
@@ -39,11 +39,11 @@ export default async function handler(req, res) {
       '',
       'There is no fee or commission for you. You deal with the customer directly and keep 100% of what they pay.',
       '',
-      'If you are interested, reply YES and Asanib will send the customer details.',
+      'If you are interested, reply YES and JSV Market will send the customer details.',
       '',
-      'You can also register your business free at https://asanib.com/provider. Registration is optional.',
+      'You can also register your business free at https://market.jsventures.me/provider. Registration is optional.',
       '',
-      'Reply STOP if you do not want Asanib to contact you again.',
+      'Reply STOP if you do not want JSV Market to contact you again.',
     ].filter((line) => line !== null).join('\n')
 
     const dispatchRef = adminDb.collection('externalLeadDispatches').doc()

@@ -28,7 +28,7 @@ export default function ExternalMatchedRequest({ requestId }: { requestId: strin
   return <main className="customer-v2-shell">
     <header className="customer-v2-header">
       <a className="back-link" href="/">← Home</a>
-      <a className="brand" href="/">asanib<span>.</span></a>
+      <a className="brand" href="/">JSV Market<span>.</span></a>
       <span />
     </header>
     <div className="customer-v2-content tab-page">
@@ -62,7 +62,7 @@ export default function ExternalMatchedRequest({ requestId }: { requestId: strin
         </div>
         <div className="empty-state large">
           <strong>Arrange the details directly.</strong>
-          <p>They'll contact you to confirm the job, timing and final price. You pay the business directly. Asanib does not take a commission from the service payment.</p>
+          <p>They'll contact you to confirm the job, timing and final price. You pay the business directly. JSV Market does not take a commission from the service payment.</p>
         </div>
         <a className="text-button" href="/">Return home</a>
       </section>

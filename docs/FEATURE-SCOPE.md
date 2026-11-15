@@ -1,16 +1,7 @@
-# Feature scope: geo matching, KYB, provider checkout and mobile PWA
+# JSV Market feature scope
 
-This branch introduces the first production-oriented version of the following Asanib capabilities:
+JSV Market lets customers post a local-service request, routes it to relevant businesses, collects quotes and lets the customer choose a provider.
 
-- Structured UAE location matching using Google Maps Platform on the server.
-- Customer location autocomplete restricted to the UAE.
-- Broad service-area matching so providers covering Dubai can match neighbourhood requests such as Al Barsha.
-- Provider KYB collection and review, including private trade-licence uploads.
-- Separate review and approval of provider external checkout links.
-- Snapshotting approved checkout destinations onto quotes and bookings.
-- Customer post-acceptance payment-choice flow for provider checkout.
-- A feature-gated slot for future embedded Ziina-powered Asanib Checkout.
-- New mobile-first customer and provider PWA shells with bottom navigation.
-- New admin review workspace for KYB and payment-link approvals.
+This branch includes customer requests, provider profiles and verification, quote acceptance, bookings, approved provider-hosted payment links, notifications, administration and private verification-document storage.
 
-Asanib Checkout itself is intentionally not enabled by this branch; the external provider checkout flow is live once a provider's payment link has been approved.
+Platform checkout uses Network International’s N-Genius Hosted Payment Page. The integration supports sandbox and live configuration, authenticated order creation, customer redirect, status verification and idempotent webhook updates. Credentials and enablement remain environment-controlled.
