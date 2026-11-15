@@ -139,7 +139,7 @@ export async function getNetworkPaymentStatus(bookingId: string) {
   return authenticatedPost<{ status: string }>('/api/network-payment-status', { bookingId })
 }
 
-export async function reviewProvider(providerId: string, action: 'verify_kyb' | 'reject_kyb' | 'approve_payment_link' | 'reject_payment_link' | 'revoke_provider', note = '') {
+export async function reviewProvider(providerId: string, action: 'verify_kyb' | 'manual_kyb' | 'reject_kyb' | 'approve_payment_link' | 'reject_payment_link' | 'revoke_provider', note = '') {
   return authenticatedPost<{ ok: true }>('/api/admin-provider-review', { providerId, action, note })
 }
 
