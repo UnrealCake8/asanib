@@ -8,7 +8,7 @@ import LegalPage from './LegalPages'
 import NetworkCheckoutPage from './NetworkCheckoutPage'
 
 function OperatorFooter() {
-  return <footer className="global-operator-footer"><div><span>JSV Market is operated by <strong>JS Ventures LLC</strong> in the United Arab Emirates.</span><nav><a href="/privacy">Privacy Policy</a><a href="/terms">Terms & Conditions</a><a href="/cookies">Cookie Policy</a><a href="/refunds">Refund Policy</a><a href="/provider">For providers</a></nav></div></footer>
+  return <footer className="global-operator-footer"><div><div className="operator-intro"><span>JSV Market is operated by <strong>JS Ventures LLC</strong> in the United Arab Emirates.</span><div className="operator-contact"><a href="tel:+971585235995">+971 58 523 5995</a><a href="mailto:support@market.jsventures.me">support@market.jsventures.me</a></div></div><nav><a href="/privacy">Privacy Policy</a><a href="/terms">Terms & Conditions</a><a href="/cookies">Cookie Policy</a><a href="/refunds">Refund Policy</a><a href="/provider">For providers</a></nav></div></footer>
 }
 
 export default function AppRouter() {

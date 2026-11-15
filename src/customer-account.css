@@ -1,0 +1,94 @@
+/* Customer navigation, account dialog and contact — editorial palette (loaded last). */
+
+/* ---- Header brand button ---- */
+.customer-v2-brand { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.customer-v2-brand:focus-visible { outline: 2px solid var(--color-focus); outline-offset: var(--space-2xs); }
+
+/* ---- Primary nav (desktop) ---- */
+.customer-v2-nav { display: flex; align-items: center; gap: var(--space-lg); }
+.customer-v2-nav button { position: relative; min-height: 44px; padding: 0; border: 0; border-block-end: 2px solid transparent; background: transparent; color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; cursor: pointer; transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
+.customer-v2-nav button:hover { color: var(--color-accent); }
+.customer-v2-nav button.active { border-block-end-color: var(--color-accent); color: var(--color-accent); }
+.customer-v2-nav button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: var(--space-2xs); }
+.customer-v2-nav b { margin-inline-start: var(--space-2xs); padding: 1px 6px; background: var(--color-accent); color: var(--color-accent-ink); font-size: var(--text-xs); font-weight: 700; }
+
+/* ---- Home quicklink ---- */
+.home-quicklinks { max-width: var(--container); margin-inline: auto; padding: 0 var(--gutter) var(--section-gap-s); }
+.home-quicklinks button { min-height: 44px; padding: 0; border: 0; border-block-end: 2px solid currentColor; background: transparent; color: var(--color-accent); font-family: var(--font-body); font-size: var(--text-md); cursor: pointer; }
+.home-quicklinks button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: var(--space-2xs); }
+
+/* ---- Account dialog (sign in / sign up) ---- */
+.mobile-sheet-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; padding: var(--space-lg); background: color-mix(in oklab, var(--color-ink) 55%, transparent); }
+.mobile-sheet.account-dialog { width: min(460px, 100%); max-height: calc(100dvh - 2 * var(--space-lg)); overflow: auto; padding: var(--space-xl); border: var(--rule-hair) solid var(--color-rule-2); border-block-start: var(--rule-heavy) solid var(--color-accent); border-radius: 0; background: var(--color-paper); box-shadow: none; }
+.account-dialog .sheet-handle { display: none; }
+.account-dialog .sheet-title { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); margin: 0 0 var(--space-lg); }
+.account-dialog .sheet-title > div { display: grid; gap: var(--space-2xs); }
+.account-dialog .sheet-title span { color: var(--color-accent); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; letter-spacing: .02em; }
+.account-dialog .sheet-title h2 { max-width: none; margin: 0; font-size: var(--text-2xl); font-weight: 400; }
+.account-dialog .sheet-close { flex: 0 0 auto; display: grid; place-items: center; width: 40px; height: 40px; min-height: 40px; padding: 0; border: var(--rule-hair) solid var(--color-rule-2); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-size: var(--text-md); line-height: 1; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out); }
+.account-dialog .sheet-close:hover { background: var(--color-paper-3); }
+.account-dialog .sheet-close:focus-visible { outline: 2px solid var(--color-focus); outline-offset: var(--space-2xs); }
+
+.account-dialog .provider-auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 0 0 var(--space-lg); padding: 0; border: var(--rule-hair) solid var(--color-rule-2); border-radius: 0; background: var(--color-paper-2); }
+.account-dialog .provider-auth-tabs button { min-height: 46px; border: 0; border-radius: 0; background: transparent; color: var(--color-ink-2); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; cursor: pointer; box-shadow: none; }
+.account-dialog .provider-auth-tabs button + button { border-inline-start: var(--rule-hair) solid var(--color-rule-2); }
+.account-dialog .provider-auth-tabs button.active { background: var(--color-accent); color: var(--color-accent-ink); box-shadow: none; }
+
+.account-dialog .provider-auth-form { display: grid; gap: var(--space-md); margin: 0; }
+.account-dialog .provider-auth-form label { display: grid; gap: var(--space-2xs); color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500; }
+.account-dialog .provider-auth-form input { width: 100%; min-height: 50px; padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-muted); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-md); }
+.account-dialog .provider-auth-form input:focus-visible { border-color: var(--color-ink-2); outline: 2px solid var(--color-focus); outline-offset: -3px; }
+
+.account-dialog .primary { width: 100%; min-height: 52px; margin-block-start: var(--space-2xs); border: var(--rule-hair) solid var(--color-accent); border-radius: 0; background: var(--color-accent); color: var(--color-accent-ink); font-family: var(--font-body); font-size: var(--text-md); font-weight: 500; box-shadow: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out); }
+.account-dialog .primary:hover { background: var(--color-accent-2); }
+.account-dialog .primary:disabled { background: var(--color-accent-muted); cursor: not-allowed; opacity: .6; }
+.account-dialog .secondary { width: 100%; min-height: 48px; border: var(--rule-hair) solid var(--color-rule-2); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-weight: 600; cursor: pointer; }
+.account-dialog .secondary:hover { background: var(--color-paper-3); }
+
+.account-dialog .notice { margin: 0 0 var(--space-md); border-radius: 0; }
+.account-dialog .integration-note { margin: var(--space-md) 0 0; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.5; }
+.account-dialog .member-sheet { display: grid; gap: var(--space-sm); }
+.account-dialog .member-sheet span { color: var(--color-muted); font-size: var(--text-sm); }
+.account-dialog .member-sheet strong { font-size: var(--text-lg); word-break: break-word; }
+
+.account-dialog .sheet-support { display: grid; gap: var(--space-2xs); margin-block-start: var(--space-lg); padding-block-start: var(--space-lg); border-block-start: var(--rule-hair) solid var(--color-rule); }
+.account-dialog .sheet-support span { color: var(--color-muted); font-size: var(--text-xs); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.account-dialog .sheet-support a { width: max-content; color: var(--color-accent); font-size: var(--text-sm); font-weight: 600; text-decoration: none; }
+.account-dialog .sheet-support a:hover { text-decoration: underline; }
+
+/* ---- Contact section (How it works page) ---- */
+.jsv-contact { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--gap-columns); width: 100%; max-width: var(--container); margin-inline: auto; padding: var(--section-gap-s) var(--gutter); border-block-start: var(--rule-hair) solid var(--color-rule-2); }
+.jsv-contact-copy { display: flex; flex-direction: column; gap: var(--space-lg); }
+.jsv-contact-copy h2 { max-width: 12ch; font-weight: 400; }
+.jsv-contact-copy p { max-width: 40ch; color: var(--color-ink-2); font-size: var(--text-lead); }
+.jsv-contact-list { border-block-start: var(--rule-heavy) solid var(--color-ink); }
+.jsv-contact-list a { display: grid; gap: var(--space-2xs); padding-block: var(--space-lg); border-block-end: var(--rule-hair) solid var(--color-rule-2); color: var(--color-ink); text-decoration: none; }
+.jsv-contact-list a span { color: var(--color-muted); font-size: var(--text-sm); letter-spacing: .06em; text-transform: uppercase; }
+.jsv-contact-list a strong { font-family: var(--font-body); font-size: var(--text-lg); font-weight: 500; color: var(--color-accent); }
+.jsv-contact-list a:hover strong { text-decoration: underline; }
+.jsv-contact-list a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: var(--space-2xs); }
+
+/* ---- Empty-state call to action ---- */
+.empty-state.large .empty-cta { display: inline-block; margin-block-start: var(--space-sm); padding: 0; border: 0; border-block-end: 2px solid currentColor; background: transparent; color: var(--color-accent); font-family: var(--font-body); font-size: var(--text-md); cursor: pointer; }
+
+/* ---- Operator footer contact ---- */
+.global-operator-footer .operator-intro { display: grid; gap: var(--space-sm); }
+.global-operator-footer .operator-contact { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-lg); }
+.global-operator-footer .operator-contact a { min-height: auto; color: var(--color-ink); font-weight: 600; text-decoration: none; }
+.global-operator-footer .operator-contact a:hover { text-decoration: underline; }
+
+/* ---- Breakpoint split: desktop nav vs. mobile tab bar ---- */
+@media (min-width: 64.01rem) {
+  .customer-mobile-nav { display: none !important; }
+}
+@media (max-width: 64rem) {
+  .customer-v2-nav { display: none; }
+  .customer-v2-shell { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .customer-mobile-nav { display: grid !important; position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; transform: none !important; grid-template-columns: repeat(5, 1fr) !important; gap: 0 !important; padding: 6px max(6px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-right)) !important; border: 0 !important; border-block-start: var(--rule-hair) solid color-mix(in oklab, var(--color-accent-ink) 22%, var(--color-ink)) !important; border-radius: 0 !important; background: var(--color-ink) !important; box-shadow: none !important; backdrop-filter: none !important; }
+  .customer-mobile-nav button { min-height: 54px !important; border: 0 !important; border-block-start: 2px solid transparent !important; border-radius: 0 !important; background: transparent !important; color: var(--color-accent-ink-muted) !important; font-family: var(--font-body) !important; font-size: 10px !important; font-weight: 600 !important; }
+  .customer-mobile-nav button > span { font-size: 17px !important; line-height: 1; }
+  .customer-mobile-nav button.active { background: transparent !important; color: var(--color-accent-ink) !important; border-block-start-color: var(--color-signal) !important; box-shadow: none !important; }
+  .customer-mobile-nav b { position: absolute; top: 6px; right: 22%; min-width: 16px; height: 16px; padding: 0 4px; display: grid; place-items: center; border-radius: 0; background: var(--color-signal); color: var(--color-ink); font-size: 9px; }
+  .jsv-contact { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
+  .jsv-contact-copy h2 { max-width: none; }
+}

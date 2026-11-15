@@ -18,6 +18,7 @@ import './payouts.css'
 import './customer-request-first.css'
 import './hallmark-home.css'
 import './jsv-sections.css'
+import './customer-account.css'
 
 registerSW({ immediate: true })
 
