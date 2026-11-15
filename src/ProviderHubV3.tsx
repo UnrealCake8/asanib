@@ -99,9 +99,9 @@ function BusinessSettings({ profile }: { profile: ProviderProfile | null }) {
     setLicenseExpiry(profile.licenseExpiry || '')
     setRepresentativeName(profile.representativeName || '')
     setRepresentativeConfirmed(Boolean(profile.representativeConfirmed))
-    setTradeLicensePath(profile.tradeLicensePath || null)
-    setEmiratesIdFrontPath(profile.emiratesIdFrontPath || null)
-    setEmiratesIdBackPath(profile.emiratesIdBackPath || null)
+    setTradeLicensePath((current) => current || profile.tradeLicensePath || null)
+    setEmiratesIdFrontPath((current) => current || profile.emiratesIdFrontPath || null)
+    setEmiratesIdBackPath((current) => current || profile.emiratesIdBackPath || null)
     setCheckoutUrl(profile.checkoutUrl || '')
     setCheckoutProvider(profile.checkoutProvider || '')
   }, [profile])
@@ -114,7 +114,7 @@ function BusinessSettings({ profile }: { profile: ProviderProfile | null }) {
       if (type === 'trade_license') setTradeLicensePath(path)
       if (type === 'emirates_id_front') setEmiratesIdFrontPath(path)
       if (type === 'emirates_id_back') setEmiratesIdBackPath(path)
-      setMessage('Document uploaded securely. Save to submit or refresh your verification.')
+      setMessage('Upload complete. The document step is now checked. Select Save & submit verification to send your details for review.')
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not upload document.') }
     setUploading(null)
   }
@@ -154,7 +154,7 @@ function BusinessSettings({ profile }: { profile: ProviderProfile | null }) {
 
     <section className="pv3-card pv3-profile-card"><div className="pv3-section-head"><div><span>PUBLIC PROFILE</span><h2>Your business</h2><p>What customers see when you quote.</p></div></div><div className="pv3-fields"><label>Business name<input value={businessName} onChange={(e) => setBusinessName(e.target.value)} required /></label><label>Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+971…" /></label><label>WhatsApp<input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+971…" /></label><label>Service areas<input value={areas} onChange={(e) => setAreas(e.target.value)} placeholder="Dubai, Sharjah, Ajman" /></label></div><div className="pv3-service-pills">{categories.map((category) => <button type="button" key={category} className={selected.includes(category) ? 'selected' : ''} onClick={() => setSelected((current) => current.includes(category) ? current.filter((x) => x !== category) : [...current, category])}>{selected.includes(category) ? '✓ ' : ''}{category}</button>)}</div></section>
 
-    <section className="pv3-card pv3-kyb"><div className="pv3-kyb-hero"><div><span>BUSINESS VERIFICATION</span><h2>Verify once. Build trust everywhere.</h2><p>We verify the UAE business and the person authorised to manage this JSV Market account. Emirates ID images stay private and are only available to authorised JSV Market reviewers through short-lived secure links.</p></div><div className={`pv3-kyb-badge ${kybStatus}`}><strong>{kybStatus === 'verified' ? 'Verified' : kybStatus === 'pending' ? 'Under review' : kybStatus === 'rejected' ? 'Needs attention' : `${completeCount}/5 ready`}</strong><span>{kybStatus === 'verified' ? 'Business approved' : 'KYB status'}</span></div></div>
+    <section className="pv3-card pv3-kyb"><div className="pv3-kyb-hero"><div><span>BUSINESS VERIFICATION</span><h2>Verify once. Build trust everywhere.</h2><p>We verify the UAE business and the person authorised to manage this JSV Market account. Emirates ID images stay private and are only available to authorised JSV Market reviewers through short-lived secure links.</p></div><div className={`pv3-kyb-badge ${kybStatus}`}><strong>{kybStatus === 'verified' ? 'Verified' : kybStatus === 'pending' ? 'Under review' : kybStatus === 'rejected' ? 'Needs attention' : `${completeCount}/5 ready`}</strong><span>{kybStatus === 'verified' ? (profile?.kybApprovalMethod === 'manual' ? 'Approved by manual review' : 'Business approved') : 'KYB status'}</span></div></div>
 
       <div className="pv3-kyb-progress">{verificationItems.map(([label, done]) => <div key={label} className={done ? 'done' : ''}><i>{done ? '✓' : ''}</i><span>{label}</span></div>)}</div>
 
@@ -166,7 +166,7 @@ function BusinessSettings({ profile }: { profile: ProviderProfile | null }) {
         <label className={tradeLicensePath ? 'uploaded' : ''}><input type="file" accept="application/pdf,image/*" onChange={(e) => void upload(e.target.files?.[0], 'trade_license')} /><b>{tradeLicensePath ? '✓' : '01'}</b><strong>Trade licence</strong><span>{uploading === 'trade_license' ? 'Uploading…' : tradeLicensePath ? 'Uploaded securely · replace' : 'Tap to upload'}</span></label>
         <label className={emiratesIdFrontPath ? 'uploaded' : ''}><input type="file" accept="application/pdf,image/*" onChange={(e) => void upload(e.target.files?.[0], 'emirates_id_front')} /><b>{emiratesIdFrontPath ? '✓' : '02'}</b><strong>Emirates ID · front</strong><span>{uploading === 'emirates_id_front' ? 'Uploading…' : emiratesIdFrontPath ? 'Uploaded securely · replace' : 'Tap to upload'}</span></label>
         <label className={emiratesIdBackPath ? 'uploaded' : ''}><input type="file" accept="application/pdf,image/*" onChange={(e) => void upload(e.target.files?.[0], 'emirates_id_back')} /><b>{emiratesIdBackPath ? '✓' : '03'}</b><strong>Emirates ID · back</strong><span>{uploading === 'emirates_id_back' ? 'Uploading…' : emiratesIdBackPath ? 'Uploaded securely · replace' : 'Tap to upload'}</span></label>
-      </div></div>{profile?.kybReviewNote && kybStatus === 'rejected' && <div className="notice error">{profile.kybReviewNote}</div>}</section>
+      </div></div><p className="integration-note">Manual KYB review is available through JSV Market administrators. Reviews take place from 3:40 PM on weekdays and 9:00 AM on weekends (UAE time); approval is not automatic.</p>{profile?.kybReviewNote && kybStatus === 'rejected' && <div className="notice error">{profile.kybReviewNote}</div>}</section>
 
     <section className="pv3-card"><div className="pv3-section-head"><div><span>PAYMENTS</span><h2>External checkout</h2><p>Optional. Add a secure payment link that JSV Market can show after a customer books.</p></div><span className={`status-pill ${paymentStatus === 'approved' ? 'accepted' : paymentStatus === 'rejected' ? 'cancelled' : 'pending'}`}>{paymentStatus === 'approved' ? 'Approved' : paymentStatus === 'pending_review' ? 'Review pending' : paymentStatus === 'rejected' ? 'Needs attention' : 'Not set'}</span></div><div className="pv3-fields"><label>Payment provider<input value={checkoutProvider} onChange={(e) => setCheckoutProvider(e.target.value)} placeholder="Provider name or your website" /></label><label>HTTPS checkout link<input type="url" value={checkoutUrl} onChange={(e) => setCheckoutUrl(e.target.value)} placeholder="https://…" /></label></div></section>
 
