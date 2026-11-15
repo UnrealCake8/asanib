@@ -55,7 +55,7 @@ export default async function handler(req, res) {
 
     await notifyUser(
       String(requestSnap.data().customerId),
-      'New quote on Asanib',
+      'New quote on JSV Market',
       `${provider.businessName || 'A provider'} quoted AED ${amount}${etaMinutes != null ? ` · ETA ${etaMinutes} min` : ''}`,
       `/request/${requestId}`,
     )

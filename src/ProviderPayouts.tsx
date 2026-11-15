@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import type { User } from 'firebase/auth'
+import JsvWordmark from './JsvWordmark'
 import { watchAuth } from './lib/data'
 import { getProviderPayoutSummary, requestProviderPayout, uploadBankAccountProof, type ProviderPayoutSummary } from './lib/marketplaceApi'
 
@@ -69,7 +70,7 @@ export default function ProviderPayouts() {
         bankProofPath: method === 'bank' ? bankProofPath : undefined,
         payoutPaymentLink: method === 'payment_link' ? payoutPaymentLink : undefined,
       })
-      setMessage(`${money(payout.amountFils)} payout requested. Asanib will review and process it.`)
+      setMessage(`${money(payout.amountFils)} payout requested. JSV Market will review and process it.`)
       await refresh()
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not request payout.') }
     setSubmitting(false)
@@ -78,9 +79,9 @@ export default function ProviderPayouts() {
   if (!ready || loading) return <main className="payout-page"><div className="provider-loading">Loading payouts…</div></main>
 
   return <main className="payout-page">
-    <header className="payout-header"><a href="/provider">← Business</a><a className="brand" href="/">asanib<span>.</span></a><span /></header>
+    <header className="payout-header"><a href="/provider">← Business</a><JsvWordmark /><span /></header>
     <div className="payout-wrap">
-      <section className="payout-hero"><div><span>EARNINGS</span><h1>Payouts</h1><p>Track money received through Asanib Checkout and choose where your available balance should be sent.</p></div><div className="payout-available"><span>AVAILABLE TO CASH OUT</span><strong>{money(summary?.availableFils || 0)}</strong><small>{summary?.eligibleBookingCount || 0} paid completed job{summary?.eligibleBookingCount === 1 ? '' : 's'}</small></div></section>
+      <section className="payout-hero"><div><span>EARNINGS</span><h1>Payouts</h1><p>Track money received through JSV Market Checkout and choose where your available balance should be sent.</p></div><div className="payout-available"><span>AVAILABLE TO CASH OUT</span><strong>{money(summary?.availableFils || 0)}</strong><small>{summary?.eligibleBookingCount || 0} paid completed job{summary?.eligibleBookingCount === 1 ? '' : 's'}</small></div></section>
 
       <section className="payout-stats"><article><span>Total earned</span><strong>{money(summary?.totalEarnedFils || 0)}</strong></article><article><span>Pending payout</span><strong>{money(summary?.pendingFils || 0)}</strong></article><article><span>Paid out</span><strong>{money(summary?.paidOutFils || 0)}</strong></article></section>
 
@@ -91,7 +92,7 @@ export default function ProviderPayouts() {
         <div className="payout-methods"><button type="button" className={method === 'bank' ? 'active' : ''} onClick={() => setMethod('bank')}><b>Bank transfer</b><span>UAE bank account · proof required</span></button><button type="button" className={method === 'payment_link' ? 'active' : ''} onClick={() => setMethod('payment_link')}><b>Custom payment link</b><span>HTTPS link · no proof required for now</span></button></div>
 
         <form onSubmit={submit}>
-          {method === 'bank' ? <div className="payout-fields"><label>Account holder<input value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="As shown by the bank" required /></label><label>Bank name<input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Emirates NBD" required /></label><label className="wide">UAE IBAN<input value={bankIban} onChange={(e) => setBankIban(e.target.value.toUpperCase().replace(/\s/g, ''))} placeholder="AE…" required /></label><label className={`payout-proof wide ${bankProofPath ? 'uploaded' : ''}`}><input type="file" accept="application/pdf,image/*" onChange={(e) => void upload(e.target.files?.[0])} /><b>{bankProofPath ? '✓ Bank proof uploaded' : 'Upload bank account proof'}</b><span>{uploading ? 'Uploading…' : bankProofPath ? 'Tap to replace · PDF/JPG/PNG/WebP' : 'Bank letter, statement header or official account confirmation'}</span></label></div> : <div className="payout-fields"><label className="wide">Custom payment link<input type="url" value={payoutPaymentLink} onChange={(e) => setPayoutPaymentLink(e.target.value)} placeholder="https://…" required /></label><div className="payout-note wide"><strong>No proof required at the moment.</strong><span>Asanib will send the payout to this link after the payout request is reviewed.</span></div></div>}
+          {method === 'bank' ? <div className="payout-fields"><label>Account holder<input value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="As shown by the bank" required /></label><label>Bank name<input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Emirates NBD" required /></label><label className="wide">UAE IBAN<input value={bankIban} onChange={(e) => setBankIban(e.target.value.toUpperCase().replace(/\s/g, ''))} placeholder="AE…" required /></label><label className={`payout-proof wide ${bankProofPath ? 'uploaded' : ''}`}><input type="file" accept="application/pdf,image/*" onChange={(e) => void upload(e.target.files?.[0])} /><b>{bankProofPath ? '✓ Bank proof uploaded' : 'Upload bank account proof'}</b><span>{uploading ? 'Uploading…' : bankProofPath ? 'Tap to replace · PDF/JPG/PNG/WebP' : 'Bank letter, statement header or official account confirmation'}</span></label></div> : <div className="payout-fields"><label className="wide">Custom payment link<input type="url" value={payoutPaymentLink} onChange={(e) => setPayoutPaymentLink(e.target.value)} placeholder="https://…" required /></label><div className="payout-note wide"><strong>No proof required at the moment.</strong><span>JSV Market will send the payout to this link after the payout request is reviewed.</span></div></div>}
           <button className="primary payout-submit" disabled={submitting || uploading || !summary?.availableFils}>{submitting ? 'Requesting…' : summary?.availableFils ? `Cash out ${money(summary.availableFils)}` : 'No balance available'}</button>
         </form>
       </section>

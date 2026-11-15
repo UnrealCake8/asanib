@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       await ref.update({
         approved: false,
         kybStatus: 'rejected',
-        kybReviewNote: note || 'Provider approval revoked by Asanib.',
+        kybReviewNote: note || 'Provider approval revoked by JSV Market.',
         updatedAt: FieldValue.serverTimestamp(),
       })
     } else {

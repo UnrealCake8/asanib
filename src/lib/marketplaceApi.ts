@@ -14,7 +14,7 @@ async function authenticatedPost<T>(path: string, body: Record<string, unknown>)
     body: JSON.stringify(body),
   })
   const payload = await response.json().catch(() => ({})) as T & { error?: string }
-  if (!response.ok) throw new Error(payload.error || 'Asanib could not complete that action.')
+  if (!response.ok) throw new Error(payload.error || 'JSV Market could not complete that action.')
   return payload
 }
 
@@ -127,33 +127,16 @@ export async function acceptQuoteWithCheckout(request: ServiceRequest, quote: Qu
     checkoutUrl?: string | null
     checkoutProvider?: string | null
     checkoutHost?: string | null
-    asanibCheckoutAvailable?: boolean
   }>('/api/accept-quote', { requestId: request.id, quoteId: quote.id })
-
-  if (result.asanibCheckoutAvailable) {
-    return {
-      ...result,
-      checkoutUrl: `/checkout/${result.bookingId}`,
-      checkoutProvider: 'Asanib Checkout · Ziina',
-      checkoutHost: 'pay.ziina.com',
-    }
-  }
   return result
 }
 
-export async function startAsanibCheckout(bookingId: string) {
-  return authenticatedPost<{
-    paymentIntentId: string
-    redirectUrl: string
-    status: string
-    amountFils: number
-    providerName: string
-    merchantName: string
-  }>('/api/ziina-checkout', { bookingId })
+export async function startNetworkCheckout(bookingId: string) {
+  return authenticatedPost<{ paymentUrl: string }>('/api/network-checkout', { bookingId })
 }
 
-export async function getAsanibCheckoutStatus(bookingId: string) {
-  return authenticatedPost<{ status: string; paymentIntentId?: string }>('/api/ziina-payment-status', { bookingId })
+export async function getNetworkPaymentStatus(bookingId: string) {
+  return authenticatedPost<{ status: string }>('/api/network-payment-status', { bookingId })
 }
 
 export async function reviewProvider(providerId: string, action: 'verify_kyb' | 'reject_kyb' | 'approve_payment_link' | 'reject_payment_link' | 'revoke_provider', note = '') {

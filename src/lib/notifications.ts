@@ -38,7 +38,7 @@ async function setupListeners() {
   onRegistered(messaging, (fid) => { void sendRegistration(fid) })
   onUnregistered(messaging, (fid) => { void removeRegistration(fid) })
   onMessage(messaging, (payload) => {
-    window.dispatchEvent(new CustomEvent('asanib:notification', { detail: payload }))
+    window.dispatchEvent(new CustomEvent('jsv-market:notification', { detail: payload }))
   })
   listenersReady = true
   return messaging

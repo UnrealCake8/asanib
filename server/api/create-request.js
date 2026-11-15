@@ -21,7 +21,7 @@ export default async function handler(req,res){
     const contactPhone=normalizePhone(req.body?.contactPhone)
     const shareContactConsent=req.body?.shareContactConsent===true
     if(!contactPhone)return res.status(400).json({error:'Enter a valid WhatsApp or mobile number in international format.'})
-    if(!shareContactConsent)return res.status(400).json({error:'You must allow Asanib to share your contact number with a matched business.'})
+    if(!shareContactConsent)return res.status(400).json({error:'You must allow JSV Market to share your contact number with a matched business.'})
     const baseRequest={query:cleanText(req.body?.query,700),location:cleanText(req.body?.location,160),budget:req.body?.budget==null?null:Number(req.body.budget),urgency:cleanText(req.body?.urgency,20),scheduledFor:req.body?.scheduledFor?cleanText(req.body.scheduledFor,80):null}
     if(baseRequest.query.length<8||baseRequest.location.length<2)return res.status(400).json({error:'Describe the job and area.'})
     if(!['now','today','scheduled'].includes(baseRequest.urgency))return res.status(400).json({error:'Invalid urgency.'})
@@ -43,7 +43,7 @@ export default async function handler(req,res){
     batch.set(requestRef,{...request,locationData,customerId:user.uid,contactPhone,shareContactConsent:true,status:'open',matchCount:providers.length,externalMatchStatus:'queued_for_auto_match',externalAutoDispatch:true,nextExternalDispatchAt:new Date(),dispatchMode:request.urgency==='now'?'proximity':'coverage',createdAt:FieldValue.serverTimestamp()})
     providers.forEach((provider,index)=>{const matchRef=adminDb.collection('providerMatches').doc(provider.id).collection('requests').doc(requestRef.id);batch.set(matchRef,{id:requestRef.id,requestId:requestRef.id,customerId:user.uid,...request,locationData,status:'open',routingRank:index+1,dispatchDistanceKm:provider.dispatchDistanceKm??null,matchedAt:FieldValue.serverTimestamp(),createdAt:FieldValue.serverTimestamp()})})
     await batch.commit()
-    await Promise.allSettled(providers.flatMap((provider)=>[notifyUser(provider.id,request.urgency==='now'?'Urgent job near you':'New matching Asanib request',`${request.category} in ${request.location}${request.budget?` · up to AED ${request.budget}`:''}`,'/provider'),sendProviderRequestAlert(provider,request,requestRef.id)]))
+    await Promise.allSettled(providers.flatMap((provider)=>[notifyUser(provider.id,request.urgency==='now'?'Urgent job near you':'New matching JSV Market request',`${request.category} in ${request.location}${request.budget?` · up to AED ${request.budget}`:''}`,'/provider'),sendProviderRequestAlert(provider,request,requestRef.id)]))
     return res.status(201).json({id:requestRef.id,matchCount:providers.length,location:locationData,category:request.category,routingSource:request.routingSource,dispatchMode:request.urgency==='now'?'proximity':'coverage',externalAutoDispatch:true})
   }catch(error){return sendError(res,error)}
 }

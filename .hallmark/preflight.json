@@ -1,0 +1,31 @@
+{
+  "target": "/",
+  "framework": "Vite 8 with React 19",
+  "evidence": [
+    "package.json:6-10 defines the dev, build, preview, and test commands",
+    "src/main.tsx:7-17 lists the existing stylesheet order",
+    "src/styles.css:1-13 contains the inherited palette and Inter stack",
+    "src/CustomerAppV2.tsx:122-140 owns the customer homepage, form wiring, tabs, and account sheet"
+  ],
+  "brand": {
+    "name": "JSV Market",
+    "source": "existing project code, not memory",
+    "existing_anchor": "#126b5c from src/styles.css:7",
+    "locked_logo_or_font": false
+  },
+  "preserve": [
+    "Every request field, value, handler, route, id, link, consent line, state, and payment safeguard",
+    "The JSV Market name and the existing green anchor as evidence, converted into the dealt theme's token system",
+    "The provider, requests, bookings, account, and request-detail destinations"
+  ],
+  "introduce": [
+    "A full editorial redesign of the public customer homepage",
+    "A dedicated Hallmark token and base layer with square controls, paper surfaces, typographic hierarchy, and ruled structure",
+    "A counter-style first screen where the working service-request form is the signature"
+  ],
+  "material": {
+    "real": ["JSV Market", "UAE operator", "working request form", "Al Barsha example", "local providers", "request, quote, timing, and booking flow"],
+    "pictures": ["none required; the working product is the visual"],
+    "absent": ["customer metrics", "testimonials", "partner logos", "brand font files", "provider photography"]
+  }
+}

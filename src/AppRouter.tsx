@@ -5,18 +5,17 @@ import ProviderPayouts from './ProviderPayouts'
 import AdminV2 from './AdminV2'
 import ExternalOps from './ExternalOps'
 import LegalPage from './LegalPages'
-import { ZiinaCheckoutPage } from './ZiinaPages'
+import NetworkCheckoutPage from './NetworkCheckoutPage'
 
 function OperatorFooter() {
-  return <footer className="global-operator-footer"><div><span>Asanib is operated by <strong>JS Ventures LLC</strong> in the United Arab Emirates.</span><nav><a href="/privacy">Privacy Policy</a><a href="/terms">Terms & Conditions</a><a href="/cookies">Cookie Policy</a><a href="/refunds">Refund Policy</a><a href="/provider">For providers</a></nav></div></footer>
+  return <footer className="global-operator-footer"><div><span>JSV Market is operated by <strong>JS Ventures LLC</strong> in the United Arab Emirates.</span><nav><a href="/privacy">Privacy Policy</a><a href="/terms">Terms & Conditions</a><a href="/cookies">Cookie Policy</a><a href="/refunds">Refund Policy</a><a href="/provider">For providers</a></nav></div></footer>
 }
 
 export default function AppRouter() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
-  const checkoutMatch = path.match(/^\/checkout\/([^/]+)$/)
   const requestMatch = path.match(/^\/request\/([^/]+)$/)
 
-  if (checkoutMatch) return <ZiinaCheckoutPage bookingId={checkoutMatch[1]} />
+  if (path === '/checkout/complete') return <NetworkCheckoutPage />
   if (requestMatch) return <><ExternalMatchedRequest requestId={requestMatch[1]} /><OperatorFooter /></>
   if (path === '/provider/payouts') return <ProviderPayouts />
   if (path === '/provider' || path.startsWith('/provider/')) return <ProviderHubV3 />

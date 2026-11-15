@@ -1,7 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, methodNotAllowed, requireUser, sendError } from './_firebaseAdmin.js'
 import { notifyUser } from './_notify.js'
-import { ziinaConfigured } from './_ziina.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res)
@@ -63,10 +62,8 @@ export default async function handler(req, res) {
     }))
     if (!otherQuotes.empty || !matches.empty) await batch.commit()
 
-    const asanibCheckoutAvailable = ziinaConfigured()
-
-    await notifyUser(outcome.providerId, 'Your Asanib quote was accepted', 'The customer booked your quote. Open Asanib to view the job.', '/provider')
-    return res.status(200).json({ bookingId: bookingRef.id, asanibCheckoutAvailable, ...outcome })
+    await notifyUser(outcome.providerId, 'Your JSV Market quote was accepted', 'The customer booked your quote. Open JSV Market to view the job.', '/provider')
+    return res.status(200).json({ bookingId: bookingRef.id, ...outcome })
   } catch (error) {
     return sendError(res, error)
   }

@@ -45,3 +45,28 @@
   .home-how{margin-top:46px}.home-section-copy h2,.home-need-copy h2{font-size:31px}.home-section-copy p,.home-need-copy p{font-size:14px;line-height:1.55}.home-steps article{padding:16px 0}.home-need{margin-top:46px}.home-example-list>div{grid-template-columns:1fr;gap:4px}.home-principles{margin-top:46px}.customer-home-footer{margin-top:46px}
   .customer-v2-content.tab-page{padding:20px 14px 28px}.tab-page-title h1{font-size:31px}
 }
+
+/* Keep the public homepage quiet and editorial rather than template-like. */
+@media(min-width:1025px){
+  .customer-v2-shell{background:#f7f5ef}
+  .customer-v2-header{width:calc(100% - 48px);max-width:1120px;padding:22px 0;border-bottom:1px solid #d6d2c8;background:#f7f5ef}
+  .customer-v2-header .brand{font-size:24px;letter-spacing:-.035em}.customer-v2-actions button{border-radius:4px}
+  .customer-v2-content{width:calc(100% - 48px);max-width:1120px;padding:72px 0 48px}
+  .app-welcome{position:static;overflow:visible;max-width:780px;margin:0 0 48px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;text-align:left}
+  .app-welcome:after{display:none}.app-welcome>div>span{display:block;padding:0;border-radius:0;background:none;color:#6b6a63;font-size:11px;letter-spacing:.1em}
+  .app-welcome h1{max-width:760px;margin:14px 0 16px;font-size:clamp(48px,6vw,68px);line-height:1;letter-spacing:-.045em}
+  .app-welcome p{max-width:620px;margin:0;color:#5f625d;font-size:18px}
+  .app-request-card{max-width:960px;margin:0;padding:28px 0!important;border:0!important;border-top:1px solid #cbc8bf!important;border-bottom:1px solid #cbc8bf!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+  .app-request-card .request-card-heading{padding:0 0 16px}.app-request-card .search-field{border:1px solid #cbc8bf;border-radius:6px;background:#fff}
+  .app-request-card .form-grid>label{border-radius:6px;background:#fff}.app-request-card .urgency-row .chip,.app-request-card .request-submit{border-radius:4px;box-shadow:none}
+  .home-how,.home-need{max-width:960px;margin-left:0}.home-how{margin-top:96px}.home-need{margin-top:96px}
+}
+
+@media(max-width:1024px){
+  .customer-v2-shell{background:#f7f5ef}
+  .app-welcome{position:static;overflow:visible;padding:22px 0 8px;border:0;border-radius:0;background:none;box-shadow:none}
+  .app-welcome:after{display:none}
+  .app-request-card{padding:18px 0!important;border:0!important;border-top:1px solid #d5d1c8!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+  .app-request-card .search-field,.app-request-card .form-grid>label{border-radius:6px}
+  .app-request-card .urgency-row .chip,.app-request-card .request-submit{border-radius:4px!important}
+}

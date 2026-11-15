@@ -1,16 +1,14 @@
-# Review checklist
+# JSV Market review checklist
 
-Before merging to production:
-
-- [ ] CI build passes.
-- [ ] Google Cloud billing is enabled for the selected project.
-- [ ] Places API (New) is enabled.
-- [ ] Geocoding API is enabled.
-- [ ] `GOOGLE_MAPS_API_KEY` is set in Vercel and restricted to the required APIs.
-- [ ] Firebase Storage is enabled.
-- [ ] `FIREBASE_STORAGE_BUCKET` is set in Vercel.
-- [ ] Firebase Storage rules are deployed with `firebase deploy --only storage`.
-- [ ] Test a Dubai-wide provider against an Al Barsha customer request.
-- [ ] Test provider KYB submission and admin verification.
-- [ ] Test payment-link approval, quote snapshotting and post-acceptance external checkout.
-- [ ] Keep `VITE_ASANIB_CHECKOUT_ENABLED=false` until embedded Ziina checkout is implemented and tested.
+- [ ] Customer can post and cancel a request.
+- [ ] Matching sends the request only to relevant businesses.
+- [ ] Approved businesses can quote; unapproved businesses cannot.
+- [ ] Customer can accept one quote and create one booking.
+- [ ] Provider-hosted checkout destinations are reviewed and clearly identified.
+- [ ] Sandbox order creation returns a Network International hosted payment URL.
+- [ ] Return-page verification records purchased, failed and pending outcomes correctly.
+- [ ] Duplicate webhook event IDs are harmless.
+- [ ] Live credentials exist only in the approved Vercel environment.
+- [ ] Private verification documents remain access controlled.
+- [ ] Mobile and desktop customer flows pass visual and interaction checks.
+- [ ] Production domains and DNS remain unchanged until preview approval.

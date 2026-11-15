@@ -15,8 +15,8 @@ function safeEqual(a, b) {
   return left.length === right.length && crypto.timingSafeEqual(left, right)
 }
 function requireWebhookSecret(req) {
-  const expected = String(process.env.ASANIB_WEBHOOK_SECRET || '').trim()
-  if (!expected) throw Object.assign(new Error('ASANIB_WEBHOOK_SECRET is not configured.'), { statusCode: 503 })
+  const expected = String(process.env.JSV_MARKET_WEBHOOK_SECRET || '').trim()
+  if (!expected) throw Object.assign(new Error('JSV_MARKET_WEBHOOK_SECRET is not configured.'), { statusCode: 503 })
   const header = String(req.headers.authorization || '')
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
   if (!token || !safeEqual(token, expected)) throw Object.assign(new Error('Unauthorized.'), { statusCode: 401 })
@@ -53,7 +53,7 @@ function customerDetailsReply(request) {
   const phone = String(request?.contactPhone || '').replace(/\D/g, '')
   if (!phone || !request?.shareContactConsent) return null
   return [
-    'Thanks, you got this Asanib lead.',
+    'Thanks, you got this JSV Market lead.',
     '',
     request.query,
     `Location: ${request.location}`,
@@ -62,7 +62,7 @@ function customerDetailsReply(request) {
     '',
     `Customer WhatsApp/phone: +${phone}`,
     '',
-    'Please contact the customer directly. Asanib does not take commission, and you keep 100% of the service payment.',
+    'Please contact the customer directly. JSV Market does not take commission, and you keep 100% of the service payment.',
   ].filter(Boolean).join('\n')
 }
 
@@ -90,13 +90,13 @@ async function handleInterested(dispatch, provider, receivedAt, text) {
     const currentProviderId = String(dispatch.providerId || provider?.id || '')
     if (request.status !== 'open' || (winnerId && winnerId !== currentProviderId)) {
       transaction.set(dispatch.ref, { status: 'closed_after_match', replyType: 'interested', replyText: text, repliedAt: receivedAt, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
-      return { won: false, replyText: 'Thanks for replying. Another provider has already taken this Asanib lead.' }
+      return { won: false, replyText: 'Thanks for replying. Another provider has already taken this JSV Market lead.' }
     }
 
     const replyText = customerDetailsReply(request)
     if (!replyText) {
       transaction.set(dispatch.ref, { status: 'contact_not_authorized', replyType: 'interested', replyText: text, repliedAt: receivedAt, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
-      return { won: false, replyText: 'Thanks. Asanib cannot release the customer contact details for this request.' }
+      return { won: false, replyText: 'Thanks. JSV Market cannot release the customer contact details for this request.' }
     }
 
     transaction.set(requestRef, {
@@ -189,7 +189,7 @@ export default async function handler(req, res) {
     if ((await eventRef.get()).exists) return res.status(200).json({ ok: true, duplicate: true })
 
     const receivedAt = receivedAtDate.toISOString()
-    await eventRef.create({ event: 'whatsapp.inbound', from, text, replyType, messageId, receivedAt, createdAt: FieldValue.serverTimestamp(), source: 'asanib-whatsapp-gateway' })
+    await eventRef.create({ event: 'whatsapp.inbound', from, text, replyType, messageId, receivedAt, createdAt: FieldValue.serverTimestamp(), source: 'jsv-market-whatsapp-gateway' })
     const action = await applyReplyAction({ from, replyType, text, receivedAt })
 
     return res.status(200).json({
