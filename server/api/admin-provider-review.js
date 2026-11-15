@@ -21,11 +21,25 @@ export default async function handler(req, res) {
       await ref.update({
         kybStatus: 'verified',
         approved: true,
+        kybApprovalMethod: 'documents',
         kybReviewNote: note,
         kybVerifiedAt: FieldValue.serverTimestamp(),
         kybVerifiedBy: admin.uid,
         updatedAt: FieldValue.serverTimestamp(),
       })
+    } else if (action === 'manual_kyb') {
+      if (!note || note.length < 10) return res.status(400).json({ error: 'Manual approval requires a review note of at least 10 characters.' })
+      if (provider.kybStatus === 'verified') return res.status(409).json({ error: 'This provider is already approved. Revoke approval first if a new review is needed.' })
+      await ref.update({
+        kybStatus: 'verified',
+        approved: true,
+        kybApprovalMethod: 'manual',
+        kybReviewNote: note,
+        kybVerifiedAt: FieldValue.serverTimestamp(),
+        kybVerifiedBy: admin.uid,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+      await adminDb.collection('providerReviewAudit').add({ providerId, action: 'manual_kyb', reviewerUid: admin.uid, note, createdAt: FieldValue.serverTimestamp() })
     } else if (action === 'reject_kyb') {
       await ref.update({
         kybStatus: 'rejected',
